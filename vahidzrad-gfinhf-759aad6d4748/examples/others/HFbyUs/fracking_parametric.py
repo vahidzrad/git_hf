@@ -37,7 +37,7 @@ for P_constant in P_constant_list:
 		fig = plt.figure()
 		for (i, ell) in enumerate(ell_list):
 		    	# Varying the hsize mesh size
-		       	problem = Fracking(hsize, ell, P_constant)
+		       	problem = Fracking(hsize, ell)
 			problem.solve()
 
 			arr_Coor_plt_X, arr_li = Opening(hsize)
