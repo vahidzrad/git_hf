@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<dolfin xmlns:dolfin="http://fenicsproject.org">
+  <parameters name="user_parameters">
+    <parameters name="AM">
+      <parameter key="max_iterations" type="int" value="1000" />
+      <parameter key="tolerance" type="double" value="1e-05" />
+    </parameters>
+    <parameters name="fem">
+      <parameter key="alpha_degree" type="int" value="1" />
+      <parameter key="u_degree" type="int" value="1" />
+    </parameters>
+    <parameters name="material">
+      <parameter key="E" type="double" value="1" />
+      <parameter key="Gc" type="double" value="0.0474208" />
+      <parameter key="ell" type="double" value="0.0177828" />
+      <parameter key="k" type="double" value="1" />
+      <parameter key="kres" type="double" value="1e-06" />
+      <parameter key="law" type="string" value="AT1" />
+      <parameter key="nu" type="double" value="0" />
+    </parameters>
+    <parameters name="post_processing">
+      <parameter key="file_alpha" type="string" value="alpha.xdmf" />
+      <parameter key="file_energies" type="string" value="energies.txt" />
+      <parameter key="file_u" type="string" value="u.xdmf" />
+      <parameter key="plot_alpha" type="bool" value="false" />
+      <parameter key="plot_u" type="bool" value="false" />
+      <parameter key="save_alpha" type="bool" value="false" />
+      <parameter key="save_energies" type="bool" value="false" />
+      <parameter key="save_u" type="bool" value="false" />
+    </parameters>
+    <parameters name="problem">
+      <parameter key="hsize" type="double" value="0.002" />
+    </parameters>
+    <parameters name="solver_alpha">
+      <parameter key="line_search" type="string" value="gpcg" />
+      <parameter key="linear_solver" type="string" value="nash" />
+      <parameter key="method" type="string" value="gpcg" />
+      <parameter key="preconditioner" type="string" value="bjacobi" />
+    </parameters>
+    <parameters name="solver_u">
+      <parameter key="linear_solver" type="string" value="superlu_dist" />
+      <parameter key="preconditioner" type="string" value="default" />
+      <parameter key="report" type="bool" value="false" />
+    </parameters>
+    <parameters name="time">
+      <parameter key="max" type="double" value="15" />
+      <parameter key="min" type="double" value="0" />
+      <parameter key="nsteps" type="int" value="500" />
+    </parameters>
+  </parameters>
+</dolfin>
