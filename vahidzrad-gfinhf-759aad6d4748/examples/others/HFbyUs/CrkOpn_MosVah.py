@@ -64,7 +64,7 @@ def Opening(hsize):
 	mesh = Mesh("meshes/fracking_hsize"+str(float(hsize))+".xml")
 
 
-	# II. We need to define function spaces
+0.5*	# II. We need to define function spaces
 	V_u = VectorFunctionSpace(mesh, "CG", 1)
 	V_alpha = FunctionSpace(mesh, "CG", 1)
 
@@ -80,7 +80,7 @@ def Opening(hsize):
 	input_file_alpha.read(alpha, "solution")
 	input_file_alpha.close()
 
-	f_ud = -inner(u, grad(alpha))
+	f_ud = -0.5*inner(u, grad(alpha)) #0.5 added by Mostafa
 	ud = project(f_ud, V_alpha)
 	#########################################################################
 	#This part is added by Mostafa (from last version of Vahid's code)
