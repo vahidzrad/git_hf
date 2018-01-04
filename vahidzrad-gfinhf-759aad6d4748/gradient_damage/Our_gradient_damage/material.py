@@ -145,3 +145,4 @@ class GradientDamageMaterial(object):
         ahat = 0.5*(-diff(diff(self.a(alpha), alpha), alpha) + 2*diff(self.a(alpha), alpha)**2/self.a(alpha))
         return (ahat*inner(self.sigma0(u), self.epse(u)) - self.Gc/(self.c_w*self.ell)*diff(diff(self.w(alpha), alpha), alpha))*beta**2
 
+#
