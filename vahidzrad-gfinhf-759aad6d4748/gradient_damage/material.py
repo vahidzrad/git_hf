@@ -44,12 +44,18 @@ class GradientDamageMaterial(object):
         self.Gc = Constant(mp.Gc)
         self.ell = Constant(mp.ell)
         self.mu = self.E/(2.0*(1.0+self.nu))
+	self.C_biot= Constant(mp.C_biot) #Added by Mostafa
+	self.P_constant = Constant(mp.P_constant) #Added by Mostafa
+
         if not mp.pstress:  # plane strain
             self.lmbda = self.E*self.nu/((1.0+self.nu)*(1.0-2.0*self.nu))
         else:  # plane stress
             self.lmbda = self.E*self.nu/(1.0-self.nu**2)
         self._eps0 = self.eps0()
+
+
         self.subdomain_id = subdomain_id
+
 
     def a(self, alpha):
         """
@@ -138,3 +144,5 @@ class GradientDamageMaterial(object):
         """
         ahat = 0.5*(-diff(diff(self.a(alpha), alpha), alpha) + 2*diff(self.a(alpha), alpha)**2/self.a(alpha))
         return (ahat*inner(self.sigma0(u), self.epse(u)) - self.Gc/(self.c_w*self.ell)*diff(diff(self.w(alpha), alpha), alpha))*beta**2
+
+

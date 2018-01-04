@@ -76,6 +76,9 @@ class QuasiStaticGradentDamageProblem(object):
         self.print_parameters()
         self.energies = []
 
+	#pressure
+        self._P_b = self.P_b() #Added by Mostafa
+
     def print0(self, text):
         """
         Print only from process 0 (for parallel run)
@@ -213,6 +216,9 @@ class QuasiStaticGradentDamageProblem(object):
         """
         Update Dirichlet boundary conditions and inelastic strains
         """
+	self.print0("time=%g"%(self.t))
+
+
         for bcs in [self.bc_u, self.bc_alpha]:
             for bc in bcs:
                 if hasattr(bc.function_arg, "t"):
@@ -221,6 +227,21 @@ class QuasiStaticGradentDamageProblem(object):
         for material in self.materials:
             if hasattr(material._eps0, "t"):
                 material._eps0.t = t
+
+
+        self._P_b.t = t  #added by Mostafa
+	self.Pressure.assign(interpolate(self._P_b, self.V_alpha)) #added by Mostafa
+	self.print0("p=%g"%(self._P_b.t)) #added by Mostafa
+
+
+
+    
+    def P_b(self):
+        """
+        Inelastic strain, supposed to be isotropic
+        """
+        return Constant(0.)
+
 
     def define_user_energy(self):
         """
@@ -295,10 +316,16 @@ class QuasiStaticGradentDamageProblem(object):
         self.alpha_prev.interpolate(self.define_initial_alpha())
         self.alpha_ub.interpolate(Constant(1.0))
 
+
+	self.Pressure=interpolate(self.P_b(), self.V_alpha) #added by Mostafa
+
         # Energies
-        self.elastic_energy = sum([material.elastic_energy_density(self.u, self.alpha)*self.dx(material.subdomain_id) for material in self.materials])
+	self.elastic_energy = sum([material.elastic_energy_density(self.u, self.alpha)*self.dx(material.subdomain_id) for material in self.materials])
         self.dissipated_energy = sum([material.dissipated_energy_density(self.u, self.alpha)*self.dx(material.subdomain_id) for material in self.materials])
-        self.total_energy = self.elastic_energy + self.dissipated_energy
+
+        self.pressurized_energy = self.Pressure* inner(self.u, grad(self.alpha))*self.dx(material.subdomain_id) #Added by Mostafa
+        self.total_energy = self.elastic_energy + self.dissipated_energy+ self.pressurized_energy #Added by Mostafa
+
 
         # First derivatives of energies
         self.Du_total_energy = derivative(self.total_energy, self.u, self.v)

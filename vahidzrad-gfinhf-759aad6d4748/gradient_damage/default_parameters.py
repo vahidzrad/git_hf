@@ -46,6 +46,8 @@ def default_material_parameters():
     material.add("law", "AT1")
     material.add("k", 2.0)
     material.add("pstress", False)
+    material.add("C_biot", 0)
+    material.add("P_constant", 0.0)
 
     return material
 
@@ -109,7 +111,7 @@ def default_solver_slepc_parameters():
 def default_post_processing_parameters():
 
     post_processing = Parameters("post_processing")
-    post_processing.add("save_energies", True)
+    post_processing.add("save_energies", False)
     post_processing.add("save_u", False)
     post_processing.add("save_alpha", False)
     post_processing.add("save_V", False)

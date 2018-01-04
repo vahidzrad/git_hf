@@ -73,7 +73,7 @@ def mesher(geofile, meshname):
             # Keep only the .xdmf mesh
             os.remove(subdir + meshname + ".geo")
             os.remove(subdir + meshname + ".msh")
-            os.remove(subdir + meshname + ".xml")
+            #os.remove(subdir + meshname + ".xml")
 
             # Info
             print("Mesh completed")
