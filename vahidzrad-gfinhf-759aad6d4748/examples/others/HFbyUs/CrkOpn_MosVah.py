@@ -62,7 +62,7 @@ def Opening(hsize):
 
 	# I. We need to define mesh
 	mesh = Mesh("meshes/fracking_hsize"+str(float(hsize))+".xml")
-
+	#plot(mesh)
 
 	# II. We need to define function spaces
 	V_u = VectorFunctionSpace(mesh, "CG", 1)
@@ -80,7 +80,10 @@ def Opening(hsize):
 	input_file_alpha.read(alpha, "solution")
 	input_file_alpha.close()
 
-	f_ud = -inner(u, grad(alpha))
+	Volume = assemble( -inner(u,grad(alpha)) * dx)
+	#print  "Volume=", Volume
+
+	f_ud = -0.5*inner(u, grad(alpha))
 	ud = project(f_ud, V_alpha)
 	#########################################################################
 	#This part is added by Mostafa (from last version of Vahid's code)
@@ -217,12 +220,14 @@ def Opening(hsize):
 	    arr_li[set_np[idx]] = 0.
 
 
-	return arr_Coor_plt_X, arr_li
+
+	return arr_Coor_plt_X, arr_li, Volume
 
 
 if __name__ == '__main__':
   	 	 # test1.py executed as script
   	 	 # do something
   	 	 Opening()
+
 
 

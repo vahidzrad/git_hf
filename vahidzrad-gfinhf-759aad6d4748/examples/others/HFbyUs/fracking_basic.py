@@ -7,12 +7,12 @@ from gradient_damage import *
 # Problem
 class Fracking(QuasiStaticGradentDamageProblem):
 	
-    def __init__(self, hsize, ell, P_constant):
+    def __init__(self, hsize, ell, P_constant ):
 
         # Parameters
         self.hsize = hsize
         self.ell = ell
-	self.P_constant=P_constant
+	self.P_constant = P_constant
 
         # Initialisation
         QuasiStaticGradentDamageProblem.__init__(self)
@@ -26,37 +26,38 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
 
         p.time.min = 0.0
-        p.time.max = 0.1
+        p.time.max = self.P_constant
         p.time.nsteps = 5
 
         #p.material.ell = 1e-1
-        #p.material.Gc = 8*p.material.ell/3
+        #p.material.Gc = 1/(1+self.hsize/(2*self.ell)) #AT1
+        p.material.Gc = 1/(1+self.hsize/(2*self.ell)) #AT2
         p.material.ell = self.ell
-        p.material.P_constant = self.P_constant
 
-        p.material.Gc = 1.0
+
+        #p.material.Gc = 1.0
         p.material.E = 1.0
         p.material.nu = 0.0
         p.material.law = "AT2"
         p.post_processing.plot_alpha = False
         p.post_processing.plot_u = False
-        p.post_processing.save_alpha = False
+        p.post_processing.save_alpha = True
         p.post_processing.save_u = False
         p.post_processing.save_Beta = False
         p.post_processing.save_V = False
         p.solver_alpha.method = "gpcg"
 
-
+		#lc = DefineNumber[ %g, Name "Parameters/lc" ];
     def define_mesh(self):
         geofile = \
 		"""
 		lc = DefineNumber[ %g, Name "Parameters/lc" ];
-                Point(1) = {0, 0, 0, 100*lc};
-                Point(2) = {4, 0, 0, 100*lc};
-                Point(3) = {4, 4, 0, 100*lc};
-                Point(4) = {0, 4, 0, 100*lc};
-                Point(5) = {1.8, 2., 0, 2*lc};
-                Point(6) = {2.2, 2., 0, 2*lc};
+                Point(1) = {0, 0, 0, 50*lc};
+                Point(2) = {4, 0, 0, 50*lc};
+                Point(3) = {4, 4, 0, 50*lc};
+                Point(4) = {0, 4, 0, 50*lc};
+                Point(5) = {1.8, 2., 0, 1*lc};
+                Point(6) = {2.2, 2., 0, 1*lc};
                 Line(1) = {1, 2};
                 Line(2) = {2, 3};
                 Line(3) = {3, 4};
@@ -146,7 +147,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
 	output_file_alpha = HDF5File(mpi_comm_world() , "alpha_4_opening.h5", "w")
 	output_file_alpha.write(self.alpha, "solution")
-	output_file_alpha.close()
+	output_file_alpha.close()	
 
 
 
@@ -156,5 +157,6 @@ if __name__ == '__main__':
     # Run a fast simulation
     problem = Fracking(hsize=0.1, ell=1.0e-1, P_constant=0.2) #hsize=0.1, ell=1.0e-5, P_constant=1.)
     problem.solve()
+
 
 

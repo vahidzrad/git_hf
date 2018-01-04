@@ -25,28 +25,41 @@ from Sneddon import SneddonWidth
 import os
 import matplotlib.pyplot as plt
 
-P_constant_list=[0.1]
+P_constant_list=[ 0.05, 0.1, 0.15, 0.2, 0.3]
 hsize_list = [0.01 ]
 colors_i = ['r', 'b', 'g','m','c','k']
 
+Volume_num=np.zeros((len(P_constant_list), 4)) #4 is thelength of ell_list
+Volume_analy=np.zeros((len(P_constant_list), 4)) #4 is thelength of ell_list
+
+for (k, P_constant) in enumerate(P_constant_list):
+	for (j, hsize) in enumerate(hsize_list):
+		ell_list = [1*hsize, 2*hsize, 3*hsize, 4*hsize]
+
+		#Volume_num=np.zeros((len(hsize_list), len(ell_list)))
+		#Volume_analy=np.zeros((len(hsize_list), len(ell_list)))
 
 
-for P_constant in P_constant_list:
-	for hsize in hsize_list:
-		ell_list = [1*hsize, 2*hsize, 3*hsize]
 		fig = plt.figure()
 		for (i, ell) in enumerate(ell_list):
 		    	# Varying the hsize mesh size
 		       	problem = Fracking(hsize, ell, P_constant)
 			problem.solve()
 
-			arr_Coor_plt_X, arr_li = Opening(hsize)
-			x, x_, uy, uy_ = SneddonWidth(P_constant)
+			arr_Coor_plt_X, arr_li, Volume = Opening(hsize)
+			x, x_, width, width_, volumeAnalytical = SneddonWidth(P_constant) 
 
-			plt.plot(arr_Coor_plt_X, arr_li, color = colors_i[i], label="$\ell=$ %g, $p=$ %g"%(round(ell,4),P_constant))
+			print "Numeric Volume=%g"%Volume
+			print "Analytical Volume=%g"%volumeAnalytical
+			#Volume_num[j][i]=Volume
+			#Volume_analy[j][i]=volumeAnalytical
+			Volume_num[k][i]=Volume
+			Volume_analy[k][i]=volumeAnalytical
 
-		plt.plot(x, uy, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[i+1], label='Senddon, $p=$ %s'%P_constant)
-		plt.plot(x_, uy_, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[i+1])
+			plt.plot(arr_Coor_plt_X, arr_li, label="$\ell=$ %g, $p=$ %g"%(round(ell,4),P_constant))
+
+		plt.plot(x, width, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[j], label='Senddon, $p=$ %s'%P_constant)
+		plt.plot(x_, width_, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[j])
 
 		plt.xlabel("Fracture Length")
 		plt.ylabel("Width")
@@ -56,6 +69,10 @@ for P_constant in P_constant_list:
 		plt.legend(loc="best")
 		save_fig = "hydraulicfracturing-results/"
 		plt.savefig(save_fig +"h= %g, p=%g"%(round(hsize,2), P_constant)+".pdf")
+		print "Numeric Volume=",Volume_num
+		print "Analytical Volume=",Volume_analy
+
+
 
 
 
