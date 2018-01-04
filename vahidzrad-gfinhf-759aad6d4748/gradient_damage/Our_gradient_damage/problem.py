@@ -660,3 +660,4 @@ class QuasiStaticGradentDamageProblem(object):
             pl.legend(loc = "best")
             pl.savefig(self.save_dir + pp.file_energies.replace("txt", "pdf"), transparent=True)
             pl.close()
+	
