@@ -76,7 +76,8 @@ class QuasiStaticGradentDamageProblem(object):
         self.print_parameters()
         self.energies = []
 
-	#pressure
+	    #pressure
+        #(Here Mostafa added pressure -a material parameter.Need to see if possible to add to 'material.py')
         self._P_b = self.P_b() #Added by Mostafa
 
     def print0(self, text):
