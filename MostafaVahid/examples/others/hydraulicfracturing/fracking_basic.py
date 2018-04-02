@@ -155,7 +155,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
 if __name__ == '__main__':
 
     # Run a fast simulation
-    problem = Fracking(hsize=0.1, ell=1.0e-1, P_constant=0.2) #hsize=0.1, ell=1.0e-5, P_constant=1.)
+    problem = Fracking(hsize=0.1, ell=1.0e-1, P_constant=0.1) #hsize=0.1, ell=1.0e-5, P_constant=1.)
     problem.solve()
 
 
