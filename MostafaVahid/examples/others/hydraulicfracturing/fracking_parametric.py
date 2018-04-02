@@ -25,8 +25,8 @@ from Sneddon import SneddonWidth
 import os
 import matplotlib.pyplot as plt
 
-P_constant_list=[ 0.05, 0.1, 0.15, 0.2, 0.3]
-hsize_list = [0.01 ]
+P_constant_list=[ 0.05, 0.1, 0.15]
+hsize_list = [0.1 ]
 colors_i = ['r', 'b', 'g','m','c','k']
 
 Volume_num=np.zeros((len(P_constant_list), 4)) #4 is thelength of ell_list
