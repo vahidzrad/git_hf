@@ -26,16 +26,18 @@ from Sneddon import SneddonWidth
 import os
 import matplotlib.pyplot as plt
 
-P_constant= 0.05
-hsize = 0.1 
-ell = 0.1
+P_constant= 0.1
+hsize = 0.01 
+ell = 0.01
 
 
 
-Diffusion()
 
-#problem = Fracking(hsize, ell, P_constant)
-#problem.solve()
+
+problem = Fracking(hsize, ell, P_constant)
+problem.solve()
+
+#Diffusion()
 
 #### Remove the .pyc file ####
 MPI.barrier(mpi_comm_world())
