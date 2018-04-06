@@ -154,11 +154,11 @@ class Fracking(QuasiStaticGradentDamageProblem):
     	#return P_b
 
     def define_pressure(self):
-	pressure = Constant(0.15)
-	#pressure = Function(self.V_alpha)
-	#input_file_pressure = HDF5File(self.mesh.mpi_comm(), "pressure.h5", "r")
-	#input_file_pressure.read(pressure, "solution")
-	#input_file_pressure.close()
+	#pressure = Constant(0.15)
+	pressure = Function(self.V_alpha)
+	input_file_pressure = HDF5File(self.mesh.mpi_comm(), "pressure.h5", "r")
+	input_file_pressure.read(pressure, "solution")
+	input_file_pressure.close()
     	return pressure
 
 
