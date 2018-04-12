@@ -27,7 +27,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
         p.time.min = 0.0
         p.time.max = self.P_constant
-        p.time.nsteps = 4
+        p.time.nsteps = 10
 
         #p.material.ell = 1e-1
         #p.material.Gc = 1/(1+self.hsize/(2*self.ell)) #AT1
@@ -57,8 +57,8 @@ class Fracking(QuasiStaticGradentDamageProblem):
                 Point(2) = {4, 0, 0, 50*lc};
                 Point(3) = {4, 4, 0, 50*lc};
                 Point(4) = {0, 4, 0, 50*lc};
-                Point(5) = {1.8, 2., 0, 1*lc};
-                Point(6) = {2.2, 2., 0, 1*lc};
+                Point(5) = {1.8, 2., 0, 10*lc};
+                Point(6) = {2.2, 2., 0, 10*lc};
                 Line(1) = {1, 2};
                 Line(2) = {2, 3};
                 Line(3) = {3, 4};
@@ -188,7 +188,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
 if __name__ == '__main__':
 
     # Run a fast simulation
-    problem = Fracking(hsize=0.01, ell=4*1.0e-2, P_constant=0.1) #hsize=0.1, ell=1.0e-5, P_constant=1.)
+    problem = Fracking(hsize=0.01, ell=4*1.0e-2, P_constant=0.5) #hsize=0.1, ell=1.0e-5, P_constant=1.)
     problem.solve()
 
 

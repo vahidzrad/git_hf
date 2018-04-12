@@ -27,9 +27,13 @@ def Diffusion():
 	getcontext().prec = 100
 	savedir = "Pressure_results"
 	mesh = Mesh("meshes/fracking_hsize"+str(float(hsize))+".xml")
+	mesh_fun = MeshFunction("size_t", mesh,"meshes/fracking_hsize"+str(float(hsize))+"_facet_region.xml")
+
+
+
 	L=4.
 	H=4.
-	Init_Pressure=100.0
+	Init_Pressure=0.15
 	#----------------------------------------------------------------------------------------
 	# Define spaces
 	#----------------------------------------------------------------------------------------
@@ -65,6 +69,11 @@ def Diffusion():
 	    def inside(self, x, on_boundary):
 		return  sqrt( (x[0]-2.)*(x[0]-2.) + (x[1]-2.)*(x[1]-2.) ) - 0.25 < 1e-6  and on_boundary
 
+        class Crack(SubDomain):
+            def inside(self, x, on_boundary):
+  		return near((x[1] - 2.) * 0.01, 0) and  x[0] <= 2.2 and x[0] >= 1.8 and on_boundary
+
+
 	       
 	# Initialize sub-domain instances
 	right=Right()
@@ -73,6 +82,9 @@ def Diffusion():
 	bottom=Bottom()
 	void=Void()
 	circle=Circle()
+	crack=Crack()
+
+
 	# define meshfunction to identify boundaries by numbers
 	boundaries = FacetFunction("size_t", mesh)
 	boundaries.set_all(9999)
@@ -81,7 +93,10 @@ def Diffusion():
 	top.mark(boundaries, 3) # mark top as 3
 	bottom.mark(boundaries, 4) # mark bottom as 4
 	void.mark(boundaries, 5) # mark void as 5
-	circle.mark(boundaries, 6) # mark void as 6
+	circle.mark(boundaries, 6) # mark circle as 6
+	crack.mark(boundaries, 7) # mark crack as 7
+
+
 
 	# Define new measure including boundary naming 
 	ds = Measure("ds")[boundaries] # left: ds(1), right: ds(2)
@@ -111,14 +126,17 @@ def Diffusion():
 	P_L = Constant(Init_Pressure)
 	P_B = Constant(Init_Pressure)
 	P_T = Constant(Init_Pressure)
-	P_V = Expression("t/t_stop*0.02",t_stop= t_stop_a, t=0.0, degree=1)
+	#P_V = Expression("100*t/t_stop*Init_Pressure",t_stop= t_stop_a, Init_Pressure=Init_Pressure, t=0.0, degree=1)
+	P_V = Constant(10*Init_Pressure)
 	## bc - P (imposed Pressure)
 	Gamma_P_0 = DirichletBC(V, P_R, boundaries, 1)
 	Gamma_P_1 = DirichletBC(V, P_L, boundaries, 2)
 	Gamma_P_2 = DirichletBC(V, P_T, boundaries, 3)
 	Gamma_P_3 = DirichletBC(V, P_B, boundaries, 4)
-	Gamma_P_4 = DirichletBC(V, P_V, boundaries, 6)
-	bc_P = [Gamma_P_0,Gamma_P_1,Gamma_P_2,Gamma_P_3,Gamma_P_4]
+	Gamma_P_4 = DirichletBC(V, P_V, boundaries, 7)
+	Gamma_P_4 = DirichletBC(V, P_V, mesh_fun, 101)
+
+	bc_P = [Gamma_P_0,Gamma_P_1,Gamma_P_2,Gamma_P_3 ,Gamma_P_4]
 
 	###############################################################
 	P_prev = interpolate(Expression('Ini_P', Ini_P=Init_Pressure, degree=1), V)
