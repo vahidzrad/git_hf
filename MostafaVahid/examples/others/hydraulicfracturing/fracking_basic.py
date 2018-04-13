@@ -27,13 +27,14 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
         p.time.min = 0.0
         p.time.max = self.P_constant
-        p.time.nsteps = 10
+        p.time.nsteps = 3
 
+
+        p.material.ell = self.ell
         #p.material.ell = 1e-1
+        p.problem.hsize = self.hsize
         #p.material.Gc = 1/(1+self.hsize/(2*self.ell)) #AT1
         p.material.Gc = 1/(1+self.hsize/(2*self.ell)) #AT2
-        p.material.ell = self.ell
-
 
         #p.material.Gc = 1.5e6
         p.material.E = 1.0
@@ -48,17 +49,18 @@ class Fracking(QuasiStaticGradentDamageProblem):
         p.solver_alpha.method = "gpcg"
         p.post_processing.save_energies = True
 
-		#lc = DefineNumber[ %g, Name "Parameters/lc" ];
+		#lc = DefineNumber[ %g, Name "Parameters/lc" ]; 
     def define_mesh(self):
         geofile = \
 		"""
+		
 		lc = DefineNumber[ %g, Name "Parameters/lc" ];
-                Point(1) = {0, 0, 0, 50*lc};
-                Point(2) = {4, 0, 0, 50*lc};
-                Point(3) = {4, 4, 0, 50*lc};
-                Point(4) = {0, 4, 0, 50*lc};
-                Point(5) = {1.8, 2., 0, 10*lc};
-                Point(6) = {2.2, 2., 0, 10*lc};
+                Point(1) = {0, 0, 0, 1*lc};
+                Point(2) = {4, 0, 0, 1*lc};
+                Point(3) = {4, 4, 0, 1*lc};
+                Point(4) = {0, 4, 0, 1*lc};
+                Point(5) = {1.8, 2., 0, 1*lc};
+                Point(6) = {2.2, 2., 0, 1*lc};
                 Line(1) = {1, 2};
                 Line(2) = {2, 3};
                 Line(3) = {3, 4};
@@ -130,22 +132,23 @@ class Fracking(QuasiStaticGradentDamageProblem):
 	topCrack().mark(self.exterior_facets_meshfunction, 7)
 	bottomCrack().mark(self.exterior_facets_meshfunction, 8)
 
-    def P_b(self):
+   # def P_b(self):
 	#P_b= Constant(0.1)
-	P_b= Expression("t", t=0.0, degree =1)
-	#P_b = Function(self.V_alpha)
-	#input_file_pressure = HDF5File(self.mesh.mpi_comm(), "pressure.h5", "r")
-	#input_file_pressure.read(P_b, "solution")
-	#input_file_pressure.close()
-    	return P_b
+	#P_b= Expression("t", t=0.0, degree =1)
+    	#return P_b
 
-    #def define_pressure(self):
-	#pressure = Expression("t", t=0.0, degree =1)
-	#pressure = Function(self.V_alpha)
-	#input_file_pressure = HDF5File(self.mesh.mpi_comm(), "pressure.h5", "r")
-	#input_file_pressure.read(pressure, "solution")
-	#input_file_pressure.close()
-    	#return pressure
+    def define_pressure(self):
+	pressure = Function(self.V_alpha)
+	input_file_pressure = HDF5File(self.mesh.mpi_comm(), "pressure.h5", "r")
+	input_file_pressure.read(pressure, "solution")
+	input_file_pressure.close()
+
+	#pressure_n=100000.*pressure.vector().array()
+
+	#output_file_pressure = HDF5File(mpi_comm_world() , "pressure_new.h5", "w")
+	#output_file_pressure.write(pressure_n, "solution")
+	#output_file_pressure.close()
+    	return pressure
 
 
     def define_initial_alpha(self):
@@ -188,7 +191,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
 if __name__ == '__main__':
 
     # Run a fast simulation
-    problem = Fracking(hsize=0.01, ell=4*1.0e-2, P_constant=0.5) #hsize=0.1, ell=1.0e-5, P_constant=1.)
+    problem = Fracking(hsize=0.1, ell=4*1.0e-2, P_constant=0.5) #hsize=0.1, ell=1.0e-5, P_constant=1.)
     problem.solve()
 
 
