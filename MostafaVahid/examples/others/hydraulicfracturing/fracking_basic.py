@@ -50,7 +50,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
         p.post_processing.save_energies = True
 
 		#lc = DefineNumber[ %g, Name "Parameters/lc" ]; 
-    def define_mesh(self): # Vahid: So, do we need to define mesh here, or we can just recall the mesh from 'Diffusion_gas.py'?
+    def define_mesh(self): # Vahid: So, here we just recall the mesh from 'Diffusion_gas.py'?
         geofile = \
 		"""
 		
