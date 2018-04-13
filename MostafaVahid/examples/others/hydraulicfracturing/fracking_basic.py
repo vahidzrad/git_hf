@@ -153,6 +153,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
     def define_initial_alpha(self):
        return Expression("x[1] == 2. & x[0] <= 2.2 & x[0] >=1.8 ? 1.0 : 0.0", degree=1)
+	# Vahid: Isn't it better to use 'near(x[1], 2)' instead? If this function is applied on nodes, there is no guarantee that there are nodes with 'x[1]=2'
        #return Expression("((x[0] == 2. & x[1] <= 2.45 & x[1] >=2.25) || (x[0] == 2. & x[1] <= 1.75 & x[1] >=1.55))? 1.0 : 0.0", degree=1)
 
     def define_bc_u(self):
@@ -192,6 +193,7 @@ if __name__ == '__main__':
 
     # Run a fast simulation
     problem = Fracking(hsize=0.1, ell=4*1.0e-2, P_constant=0.5) #hsize=0.1, ell=1.0e-5, P_constant=1.)
+	# Vahid: Do you really use these parameters? If this is the case, then why 'h' is too big? h/ell=2.5, normally h/ell<.5
     problem.solve()
 
 
