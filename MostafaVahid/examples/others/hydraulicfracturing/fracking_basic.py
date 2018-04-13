@@ -27,30 +27,30 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
         p.time.min = 0.0
         p.time.max = self.P_constant
-        p.time.nsteps = 3
+        p.time.nsteps = 3 # Vahid: Just 3 steps for the whole pressure implementation? Isn't it too few?
 
 
         p.material.ell = self.ell
-        #p.material.ell = 1e-1
+        #p.material.ell = 1e-1 #
         p.problem.hsize = self.hsize
         #p.material.Gc = 1/(1+self.hsize/(2*self.ell)) #AT1
-        p.material.Gc = 1/(1+self.hsize/(2*self.ell)) #AT2
+        p.material.Gc = 1/(1+self.hsize/(2*self.ell)) #AT2 # Vahid: Don't understand: Why 'Gc' is like that?
 
         #p.material.Gc = 1.5e6
         p.material.E = 1.0
-        p.material.nu = 0.0
-        p.material.law = "AT2"
+        p.material.nu = 0.0 # Vahid: Why 'nu' is zero? If the material is incompressible, shouldn't it be selected '0.5'?
+        p.material.law = "AT2" # Vahid: 'AT2' is much easier to solve, but harder to converge! Can't we also try with 'AT1'?
         p.post_processing.plot_alpha = False
         p.post_processing.plot_u = False
         p.post_processing.save_alpha = False
         p.post_processing.save_u = False
         p.post_processing.save_Beta = False
         p.post_processing.save_V = False
-        p.solver_alpha.method = "gpcg"
+        p.solver_alpha.method = "gpcg" # Vahid: We should also seek for other solving methods
         p.post_processing.save_energies = True
 
 		#lc = DefineNumber[ %g, Name "Parameters/lc" ]; 
-    def define_mesh(self):
+    def define_mesh(self): # Vahid: So, do we need to define mesh here, or we can just recall the mesh from 'Diffusion_gas.py'?
         geofile = \
 		"""
 		
@@ -74,7 +74,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
 		Physical Surface(1) = {30};
 
-		Physical Line(101) = {6};
+		Physical Line(101) = {6}; # Vahid: You can use a simpler label other than '101'. I think strings like 'l' would also work.
 
           	"""%(self.parameters.problem.hsize)
 
@@ -108,9 +108,9 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
         class Crack(SubDomain):
             def inside(self, x, on_boundary):
-                return near(x[1], 2) and  x[0] <= 2.2 and x[0] >= 1.8 and on_boundary
+                return near(x[1], 2) and  x[0] <= 2.2 and x[0] >= 1.8 and on_boundary # Vahid: a more beautiful way: abs(x_0 - 2) < .2 The same applies for the rest three intervals
 
-	class Void(SubDomain):
+	class Void(SubDomain): # Vahid: So, is Void the place where the pressure is applied? Why not on the whole boundary instead?
 	    def inside(self, x, on_boundary):
 		return   x[0] <= 2.5 and x[0] >= 1.5 and  x[1] <= 2.5 and x[1] >= 1.5 and on_boundary
 	
@@ -139,7 +139,7 @@ class Fracking(QuasiStaticGradentDamageProblem):
 
     def define_pressure(self):
 	pressure = Function(self.V_alpha)
-	input_file_pressure = HDF5File(self.mesh.mpi_comm(), "pressure.h5", "r")
+	input_file_pressure = HDF5File(self.mesh.mpi_comm(), "pressure.h5", "r") # Vahid: Have you checked this file? It MIGHT be a damaged file!
 	input_file_pressure.read(pressure, "solution")
 	input_file_pressure.close()
 
