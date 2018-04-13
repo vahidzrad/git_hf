@@ -82,6 +82,8 @@ def default_solver_u_parameters():
     solver_u.add("linear_solver", "mumps") # prefer "superlu_dist" or "mumps" if available
     solver_u.add("preconditioner", "default")
     solver_u.add("report", False)
+    solver_u.add("maximum_iterations", 500) #Added by Mostafa
+    solver_u.add("relative_tolerance", 1e-6) #Added by Mostafa
 
     return solver_u
 
@@ -119,7 +121,7 @@ def default_post_processing_parameters():
     post_processing.add("plot_u", False)
     post_processing.add("plot_alpha", False)
     post_processing.add("file_u", "u.xdmf")
-    post_processing.add("file_alpha", "alpha.xdmf")
+    post_processing.add("file_alpha", "alpha.pvd")
     post_processing.add("file_V", "V.xdmf")
     post_processing.add("file_Beta", "Beta.xdmf")
     post_processing.add("file_energies", "energies.txt")
