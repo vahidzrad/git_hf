@@ -29,7 +29,7 @@ def default_parameters():
 def default_problem_parameters():
 
     problem = Parameters("problem")
-    problem.add("hsize", 1e-3)
+    problem.add("hsize", 1e-3) # Vahid: So, is 'hsize' defined here, and also redefine in 'fracking_basic.py'? The same question applies for 'E', 'nu', 'Gc', 'P_constant', and perhaps etc.
     problem.add("stability", False)
     problem.add("stability_correction", False)
 
@@ -43,7 +43,7 @@ def default_material_parameters():
     material.add("kres", 1e-6)
     material.add("Gc", 1.0)
     material.add("ell", 1e-2)
-    material.add("law", "AT1")
+    material.add("law", "AT1") # Vahid: Here law is 'AT1', but in 'fracking_basic.py', it is 'AT2'
     material.add("k", 2.0)
     material.add("pstress", False)
     material.add("C_biot", 0)
@@ -82,7 +82,7 @@ def default_solver_u_parameters():
     solver_u.add("linear_solver", "mumps") # prefer "superlu_dist" or "mumps" if available
     solver_u.add("preconditioner", "default")
     solver_u.add("report", False)
-    solver_u.add("maximum_iterations", 500) #Added by Mostafa
+    solver_u.add("maximum_iterations", 500) #Added by Mostafa # Vahid: Why? And how did you determine these numbers?
     solver_u.add("relative_tolerance", 1e-6) #Added by Mostafa
 
     return solver_u
