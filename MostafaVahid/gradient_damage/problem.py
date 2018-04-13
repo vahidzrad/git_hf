@@ -81,7 +81,7 @@ class QuasiStaticGradentDamageProblem(object):
 	#pressure
         self._P_b = self.P_b() #Added by Mostafa
         self._pressure = self.define_pressure() #Added by Mostafa
-
+	self.print0(self._pressure.vector().array()) #added by Mostafa
 	#---------------------------------------------------------------------------
 
     def print0(self, text):
@@ -237,10 +237,13 @@ class QuasiStaticGradentDamageProblem(object):
         self._P_b.t = t  #added by Mostafa
 	self.Pressure.assign(interpolate(self._P_b, self.V_alpha)) #added by Mostafa
 	self.print0("p_b=%g"%(self._P_b.t)) #added by Mostafa
+	#self.Pressure.assign(self._pressure) #added by Mostafa
 
-        #self._pressure.t = t  #added by Mostafa
-	#self.Pressure.assign(interpolate(self._pressure, self.V_alpha)) #added by Mostafa
-	#self.print0("pressure=%g"%(self._pressure.t)) #added by Mostafa
+	#self.Pressure.assign(self.define_pressure()) #added by Mostafa
+	self._pressure.t=t
+	self.Pressure.assign(self._pressure) #added by Mostafa
+	self.print0(self.Pressure.vector().array()) #added by Mostafa
+
 
     
     def P_b(self):
@@ -330,8 +333,13 @@ class QuasiStaticGradentDamageProblem(object):
         self.alpha_ub.interpolate(Constant(1.0))
 
 
+
 	self.Pressure=interpolate(self.P_b(), self.V_alpha) #added by Mostafa
-	self.Pressure=interpolate(self.define_pressure(), self.V_alpha) #added by Mostafa
+	self.Pressure.assign(self.define_pressure()) #added by Mostafa
+
+	self.print0(self.Pressure.vector().array()) #added by Mostafa
+	self.print0(self.alpha.vector().array()) #added by Mostafa
+	self.print0(self.u.vector().array()) #added by Mostafa
 
         # Energies
 	self.elastic_energy = sum([material.elastic_energy_density(self.u, self.alpha)*self.dx(material.subdomain_id) for material in self.materials])
@@ -651,8 +659,9 @@ class QuasiStaticGradentDamageProblem(object):
         if pp.save_energies:
             self.elastic_energy_value = assemble(self.elastic_energy)
             self.dissipated_energy_value = assemble(self.dissipated_energy)
+            self.pressurized_energy_value = assemble(self.pressurized_energy)
             if self.comm_rank == 0:
-                self.energies.append([self.t, self.elastic_energy_value, self.dissipated_energy_value])
+                self.energies.append([self.t, self.elastic_energy_value, self.dissipated_energy_value, self.pressurized_energy_value])
                 pl.savetxt(self.save_dir + pp.file_energies, pl.array(self.energies), "%.5e")
 
         # User post-processing
@@ -668,7 +677,8 @@ class QuasiStaticGradentDamageProblem(object):
             self.energies = pl.array(self.energies)
             pl.plot(self.energies[:, 0], self.energies[:, 1], label = "Elastic")
             pl.plot(self.energies[:, 0], self.energies[:, 2], label = "Dissipated")
-            pl.plot(self.energies[:, 0], self.energies[:, 1] +  self.energies[:, 2], label = "Total")
+            pl.plot(self.energies[:, 0], self.energies[:, 3], label = "pressurized")
+            pl.plot(self.energies[:, 0], self.energies[:, 1] +  self.energies[:, 2] + self.energies[:, 3], label = "Total")
             pl.xlabel("Time")
             pl.ylabel("Energies")
             pl.legend(loc = "best")
