@@ -19,6 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy, sys, math, os, subprocess, shutil
+from CrkOpn_MosVah import Opening
 import petsc4py
 petsc4py.init()
 from petsc4py import PETSc
@@ -55,6 +56,27 @@ snes_solver_parameters_bounds = {
                  'report': False},
  'symmetric': True}
 
+def default_solver_u_parameters():
+
+    solver_u = Parameters("solver_u")
+    solver_u.add("linear_solver", "mumps") # prefer "superlu_dist" or "mumps" if available
+    solver_u.add("preconditioner", "default")
+    solver_u.add("report", False)
+    solver_u.add("maximum_iterations", 500) #Added by Mostafa
+    solver_u.add("relative_tolerance", 1e-6) #Added by Mostafa
+
+    return solver_u
+
+def default_solver_alpha_parameters():
+
+    solver_alpha = Parameters("solver_alpha")
+    solver_alpha.add("method", "tron")
+    solver_alpha.add("linear_solver", "stcg")
+    solver_alpha.add("preconditioner", "jacobi")
+    solver_alpha.add("line_search", "gpcg")
+
+    return solver_alpha
+
 #=======================================================================================
 # Input date
 #=======================================================================================
@@ -65,22 +87,23 @@ hsize= 0.1 # target cell size
 meshname="fracking_hsize%g" % (hsize)
 
 # Material constants
-ell = Constant(4 * hsize) # internal length scale
-E = 2.74e3 # Young modulus
-nu = 0.41 # Poisson ratio
+ell = Constant(2 * hsize) # internal length scale
+E = 1 # Young modulus
+nu = 0.3 # Poisson ratio
 
 PlaneStress= False
 
-Gc = 2.01e-1 # fracture toughness
+Gc = 1 # fracture toughness
 k_ell = Constant(1.0e-12) # residual stiffness
 law = "AT2"
+ModelB= True 
 
 # Stopping criteria for the alternate minimization
 max_iterations = 50
 tolerance = 1.0e-5
 
 # Loading
-ut = 1.e-2 # reference value for the loading (imposed displacement)
+ut = 2e-3 # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 load_min = 0. # load multiplier min value
 load_max = 1. # load multiplier max value
@@ -95,10 +118,10 @@ geofile = \
 		lc = DefineNumber[ %g, Name "Parameters/lc" ];
 		H = 4;
 		L = 4;
-                Point(1) = {0, 0, 0, 10*lc};
-                Point(2) = {L, 0, 0, 10*lc};
-                Point(3) = {L, H, 0, 10*lc};
-                Point(4) = {0, H, 0, 10*lc};
+                Point(1) = {0, 0, 0, 1*lc};
+                Point(2) = {L, 0, 0, 1*lc};
+                Point(3) = {L, H, 0, 1*lc};
+                Point(4) = {0, H, 0, 1*lc};
                 Point(5) = {1.8, H/2, 0, 1*lc};
                 Point(6) = {2.2, H/2, 0, 1*lc};
                 Line(1) = {1, 2};
@@ -176,7 +199,7 @@ else:
 
 mesh = Mesh('meshes/fracking_hsize'+str(float(hsize))+'.xml')
 mesh_fun = MeshFunction("size_t", mesh,"meshes/fracking_hsize"+str(float(hsize))+"_facet_region.xml")
-plt.figure()
+plt.figure(1)
 plot(mesh, "2D mesh")
 plt.interactive(True)
 
@@ -207,14 +230,32 @@ def w(alpha_):
             return 1-(1-alpha_)**2
 
 #=======================================================================================
-# strain and stress
+# strain, stress and strain energy for Isotropic and Amor's model
 #=======================================================================================
+def angle_bracket_plus(a):
+    return (a+abs(a))/2
+
+def angle_bracket_minus(a):
+    return (a-abs(a))/2
+#----------------------------------------------------------------------------------------
+def g(alpha_):
+	"""
+	degradation function
+	"""
+	return ((1-alpha_)**2+k_ell) 
+#----------------------------------------------------------------------------------------
 def eps(u_):
         """
         Geometrical strain
         """
         return sym(grad(u_))
 
+def dev_eps(u_):
+        """
+
+        """
+	return eps(u_) - 1/3*tr(eps(u_))*Identity(ndim)
+#----------------------------------------------------------------------------------------
 def sigma0(u_):
         """
         Application of the sound elasticy tensor on the strain tensor
@@ -223,16 +264,50 @@ def sigma0(u_):
         return 2.0*mu*eps(u_) + lmbda*tr(eps(u_))*Id
 
 
-def sigma(u_, alpha_):
+def sigma_A(u_, alpha_):
         """
-        Stress
+        Stress Model A
         """
-        return (a(alpha_)+k_ell) * sigma0(u_)
+        return g(alpha_) * sigma0(u_)
+
+
+def sigma_B(u_,alpha_):
+        """
+        Stress Model B
+        """
+	return  g(alpha_) * ( (lmbda+2/3*mu) * ( angle_bracket_plus( tr(eps(u_))) * Identity(ndim) )+ 2*mu*dev_eps(u_) ) + (lmbda+2/3*mu)*( angle_bracket_minus(tr(dev_eps(u_))) * Identity(ndim))
+#----------------------------------------------------------------------------------------
+def psi_0(u_):
+	"""
+	The strain energy density for a linear isotropic ma-
+	terial
+	"""
+	return  0.5 * lmbda * tr(eps(u_))**2 + mu * eps(u_)**2
+
+def psi_A(u_, alpha_):
+	"""
+	The strain energy density for model A
+	"""
+	return g(alpha_) * psi_0(u_)
+
+def psi_B(u_,alpha_):
+	"""
+	The strain energy density for model B
+	"""
+	return  0.5*(lmbda+2/3*mu) * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2 + 0.5*(lmbda+2/3*mu) * ( angle_bracket_minus(tr(dev_eps(u_))**2))
+#----------------------------------------------------------------------------------------
+
+if not ModelB:  # Model A (isotropic model)
+	psi = psi_A
+	sigma= sigma_A
+else:  # Model B (Amor's model)
+	psi = psi_B
+	sigma=sigma_B
 
 #=======================================================================================
 # others definitions
 #=======================================================================================
-prefix = "%s-L%s-H%.2f-S%.4f-l%.4f"%(law,L,H,hsize,k_ell)
+prefix = "%s-L%s-H%.2f-S%.4f-l%.4f"%(law,L,H,hsize, ell)
 save_dir = "Fracture_QS_result/" + prefix + "/"
 
 if os.path.isdir(save_dir):
@@ -328,7 +403,7 @@ bc_alpha = [Gamma_alpha_0, Gamma_alpha_1, Gamma_alpha_2, Gamma_alpha_3,Gamma_alp
 #====================================================================================
 # Define  problem and solvers
 #====================================================================================
-elastic_energy = 0.5*inner(sigma(u_,alpha_), eps(u_))*dx
+elastic_energy = psi(u_, alpha_)*dx
 external_work = dot(body_force, u_)*dx
 dissipated_energy = Gc/float(c_w)*(w(alpha_)/ell + ell*inner(grad(alpha_), grad(alpha_)))*dx 
 
@@ -352,7 +427,6 @@ lower_bound = interpolate(Constant(0.0), V_alpha)
 upper_bound = interpolate(Constant(1.0), V_alpha)
 
 problem_alpha_nl = NonlinearVariationalProblem(F_d, alpha_, bc_alpha, J=J_d)
-# problem_alpha_nl = NonlinearVariationalProblem(F_d, alpha_, J=J_d)
 problem_alpha_nl.set_bounds(lower_bound, upper_bound)
 
 
@@ -405,11 +479,10 @@ for (i_t, t) in enumerate(load_multipliers):
     lower_bound.vector()[:] = alpha_.vector()
     
     # plot the damage fied
-    plot(alpha_, range_min = 0., range_max = 1., key = "alpha", title = "Damage at loading %.4f"%(ut*t))    
-    plt.interactive(True)
-
-
-
+    plt.figure(2)	
+    plot(alpha_)#, range_min = 0., range_max = 1., key = "alpha", title = "Damage at loading %.4f"%(ut*t)) 
+    plt.show()   
+    plt.interactive(False)
     #=======================================================================================
     # Some post-processing
     #=======================================================================================
@@ -420,8 +493,10 @@ for (i_t, t) in enumerate(load_multipliers):
     surface_energy_value = assemble(dissipated_energy)
     if mpi_comm_world().rank == 0:
         print("\nEnd of timestep %d with load multiplier %g"%(i_t, t))
-        print("\nElastic and surface energies: (%g,%g)"%(elastic_energy_value,surface_energy_value))
-        print "-----------------------------------------"
+        print("AM: Iteration number: %i - Elastic_energy: %.3e" % (i_t, elastic_energy_value))
+        print("AM: Iteration number: %i - Dissipated_energy: %.3e" % (i_t, surface_energy_value))
+	print"\033[1;32m--------------------------------------------------------------\033[1;m"
+
     energies[i_t] = np.array([t,elastic_energy_value,surface_energy_value,elastic_energy_value+surface_energy_value])
     # Calculate the axial force resultant 
     forces[i_t] = np.array([t,assemble(inner(sigma(u_,alpha_)*e1,e1)*ds(1))])
@@ -472,3 +547,16 @@ def plot_energy_stress():
 
 plot_energy_stress()
 plt.interactive(True)
+#=======================================================================================
+# Save alpha and displacement data
+#=======================================================================================
+output_file_u = HDF5File(mpi_comm_world(), save_dir+"u_4_opening.h5", "w") # self.save_dir + "uO.h5"
+output_file_u.write(u_, "solution")
+output_file_u.close()
+
+output_file_alpha = HDF5File(mpi_comm_world() , save_dir+"alpha_4_opening.h5", "w")
+output_file_alpha.write(alpha_, "solution")
+output_file_alpha.close()
+
+
+#arr_Coor_plt_X, arr_li, Volume = Opening(hsize)
