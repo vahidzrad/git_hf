@@ -56,54 +56,43 @@ snes_solver_parameters_bounds = {
                  'report': False},
  'symmetric': True}
 
-def default_solver_u_parameters():
-
-    solver_u = Parameters("solver_u")
-    solver_u.add("linear_solver", "mumps") # prefer "superlu_dist" or "mumps" if available
-    solver_u.add("preconditioner", "default")
-    solver_u.add("report", False)
-    solver_u.add("maximum_iterations", 500) #Added by Mostafa
-    solver_u.add("relative_tolerance", 1e-6) #Added by Mostafa
-
-    return solver_u
-
-def default_solver_alpha_parameters():
-
-    solver_alpha = Parameters("solver_alpha")
-    solver_alpha.add("method", "tron")
-    solver_alpha.add("linear_solver", "stcg")
-    solver_alpha.add("preconditioner", "jacobi")
-    solver_alpha.add("line_search", "gpcg")
-
-    return solver_alpha
-
 #=======================================================================================
 # Input date
 #=======================================================================================
 # Geometry
 L = 4.0 # length
 H = 4.0 # height
-hsize= 0.1 # target cell size
+hsize= 0.01 # target cell size
 meshname="fracking_hsize%g" % (hsize)
 
 # Material constants
-ell = Constant(2 * hsize) # internal length scale
-E = 1 # Young modulus
-nu = 0.3 # Poisson ratio
+ell = Constant(4 * hsize) # internal length scale
+E = 1. # Young modulus
+nu = 0.2 # Poisson ratio
 
 PlaneStress= False
 
-Gc = 1 # fracture toughness
+gc = 1. # fracture toughness
 k_ell = Constant(1.0e-12) # residual stiffness
 law = "AT2"
-ModelB= True 
+
+# effective toughness, Bourdin 
+if law == "AT2":  
+	Gc = gc/(1+hsize/(2*ell)) #AT2
+elif  law == "AT1": 
+	Gc = gc/(1+3*hsize/(8*ell)) #AT1
+else:
+	Gc = gc #??
+
+
+ModelB= False 
 
 # Stopping criteria for the alternate minimization
-max_iterations = 50
+max_iterations = 100
 tolerance = 1.0e-5
 
 # Loading
-ut = 2e-3 # reference value for the loading (imposed displacement)
+ut = 0.5 # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 load_min = 0. # load multiplier min value
 load_max = 1. # load multiplier max value
@@ -118,10 +107,10 @@ geofile = \
 		lc = DefineNumber[ %g, Name "Parameters/lc" ];
 		H = 4;
 		L = 4;
-                Point(1) = {0, 0, 0, 1*lc};
-                Point(2) = {L, 0, 0, 1*lc};
-                Point(3) = {L, H, 0, 1*lc};
-                Point(4) = {0, H, 0, 1*lc};
+                Point(1) = {0, 0, 0, 10*lc};
+                Point(2) = {L, 0, 0, 10*lc};
+                Point(3) = {L, H, 0, 10*lc};
+                Point(4) = {0, H, 0, 10*lc};
                 Point(5) = {1.8, H/2, 0, 1*lc};
                 Point(6) = {2.2, H/2, 0, 1*lc};
                 Line(1) = {1, 2};
@@ -454,7 +443,7 @@ for (i_t, t) in enumerate(load_multipliers):
 
     print"\033[1;32m--- Time step %d: t = %g ---\033[1;m" % (i_t, t)
     u_T.t = t*ut
-    u_T.t = t*ut
+    u_B.t = t*ut
     # Alternate mininimization
     # Initialization
     iter = 1; err_alpha = 1
@@ -482,7 +471,7 @@ for (i_t, t) in enumerate(load_multipliers):
     plt.figure(2)	
     plot(alpha_)#, range_min = 0., range_max = 1., key = "alpha", title = "Damage at loading %.4f"%(ut*t)) 
     plt.show()   
-    plt.interactive(False)
+    plt.interactive(True)
     #=======================================================================================
     # Some post-processing
     #=======================================================================================
@@ -546,7 +535,7 @@ def plot_energy_stress():
     plt.show()
 
 plot_energy_stress()
-plt.interactive(True)
+plt.interactive(False)
 #=======================================================================================
 # Save alpha and displacement data
 #=======================================================================================
