@@ -439,7 +439,8 @@ solver_u.set_operator(A_u)
 info(solver_u.parameters,True)
 # alpha-problem
 solver_alpha = TAOLinearBoundSolver("gpcg","gmres")#PETScKrylovSolver()
-solver_alpha.parameters["report"]=False
+solver_alpha.parameters["report"]=True
+solver_alpha.parameters["monitor_convergence"]=True
 
 
 
