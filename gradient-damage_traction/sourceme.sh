@@ -1,0 +1,1 @@
+export PYTHONPATH=$(pwd)/gradient_damage:$PYTHONPATH
