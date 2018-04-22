@@ -6,8 +6,6 @@
 # Mostafa Mollaali
 # Vahid
 
-
-
 from fenics import *
 from dolfin import *
 from mshr import *
@@ -49,23 +47,22 @@ solver_alpha_parameters =  {"method" : "gpcg",
                             "linear_solver" : "cg", 
                             "preconditioner" : "jacobi", 
                             "report" : False}
-solver_u_parameters =  {"linear_solver" : "cg", 
-                            "symmetric" : True, 
-                            "preconditioner" : "hypre_amg", 
-                            "krylov_solver" : {
-                                "report" : False,
-                                "monitor_convergence" : False,
-                                "relative_tolerance" : 1e-8 
-                                }
-                            }
+
+solver_u_parameters ={"linear_solver", "mumps", # prefer "superlu_dist" or "mumps" if available
+			"preconditioner", "default",
+			"report", False,
+			"maximum_iterations", 500, #Added by Mostafa
+			"relative_tolerance", 1e-5, #Added by Mostafa
+			"symmetric", True,
+			"nonlinear_solver", "newton"}
 
 #=======================================================================================
 # Input date
 #=======================================================================================
 # Geometry
-L = 1.0 # length
-H = 0.1 # height
-hsize= 0.01 # target cell size
+L = 4.0 # length
+H = 4.0 # height
+hsize= 0.1 # target cell size
 meshname="fracture_hsize%g" % (hsize)
 
 # Material constants
@@ -77,7 +74,7 @@ PlaneStress= False
 
 gc = 1. # fracture toughness
 k_ell = Constant(1.0e-12) # residual stiffness
-law = "AT1"
+law = "AT2"
 
 # effective toughness 
 if law == "AT2":  
@@ -95,11 +92,11 @@ max_iterations = 50
 tolerance = 1.0e-5
 
 # Loading
-ut = 1.1 # reference value for the loading (imposed displacement)
+ut = 1.5e-2 # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 load_min = 0. # load multiplier min value
 load_max = 1. # load multiplier max value
-load_steps = 10 # number of time steps
+load_steps = 4 # number of time steps
 
 #=======================================================================================
 # Geometry and mesh generation
@@ -108,14 +105,14 @@ load_steps = 10 # number of time steps
 geofile = \
 		"""
 		lc = DefineNumber[ %g, Name "Parameters/lc" ];
-		H = 0.1;
-		L = 1;
+		H = 4;
+		L = 4;
                 Point(1) = {0, 0, 0, 1*lc};
                 Point(2) = {L, 0, 0, 1*lc};
                 Point(3) = {L, H, 0, 1*lc};
                 Point(4) = {0, H, 0, 1*lc};
-                \\Point(5) = {1.8, H/2, 0, 1*lc};
-                \\Point(6) = {2.2, H/2, 0, 1*lc};
+                Point(5) = {1.8, H/2, 0, 1*lc};
+                Point(6) = {2.2, H/2, 0, 1*lc};
                 Line(1) = {1, 2};
                 Line(2) = {2, 3};
                 Line(3) = {3, 4};
@@ -123,13 +120,13 @@ geofile = \
                 Line Loop(5) = {1, 2, 3, 4};
 		Plane Surface(30) = {5};
 
-		\\Line(6) = {5, 6};
-                \\Line{6} In Surface{30};
+		Line(6) = {5, 6};
+                Line{6} In Surface{30};
 
 
 		Physical Surface(1) = {30};
 
-		\\Physical Line(101) = {6};
+		Physical Line(101) = {6};
 
 """%(hsize)
 
@@ -190,7 +187,7 @@ else:
 
 
 mesh = Mesh('meshes/fracture_hsize'+str(float(hsize))+'.xml')
-#mesh_fun = MeshFunction("size_t", mesh,"meshes/fracture_hsize"+str(float(hsize))+"_facet_region.xml")
+mesh_fun = MeshFunction("size_t", mesh,"meshes/fracture_hsize"+str(float(hsize))+"_facet_region.xml")
 plt.figure(1)
 plot(mesh, "2D mesh")
 plt.interactive(True)
@@ -347,7 +344,6 @@ left=Left()
 top=Top()
 bottom=Bottom()
 
-
 # define meshfunction to identify boundaries by numbers
 boundaries = FacetFunction("size_t", mesh)
 boundaries.set_all(9999)
@@ -369,29 +365,32 @@ V_alpha = FunctionSpace(mesh, "CG", 1)
 u_, u, u_t = Function(V_u), TrialFunction(V_u), TestFunction(V_u)
 alpha_, alpha, alpha_t = Function(V_alpha), TrialFunction(V_alpha), TestFunction(V_alpha)
 
-alpha_0 = interpolate(Constant(0.0), V_alpha) # initial (known) alpha, undamaged everywhere.
+alpha_0 = Function(V_alpha)
+define_alpha_0=Expression("x[1] == 2. & x[0] <= 2.2 & x[0] >=1.8 ? 1.0 : 0.0", degree=1)
+alpha_0.interpolate(define_alpha_0) #added by Mostafa
+#alpha_0 = interpolate(Constant(0.0), V_alpha) # initial (known) alpha, undamaged everywhere.
 #=======================================================================================
 # Dirichlet boundary condition for a traction test boundary
 #=======================================================================================
 # bc - u (imposed displacement)
-u_R = Expression(("t", "0.",), t=0.0, degree=1)
+u_R = zero_v#Expression(("t", "0.",), t=0.0, degree=1)
 u_L = zero_v
-u_T = zero_v#Expression(("0.", "t",), t=0.0, degree=1)
-u_B = zero_v#Expression(("0.", "-t",), t=0.0, degree=1)
+u_T = Expression(("0.", "t",), t=0.0, degree=1)
+u_B = Expression(("0.", "-t",), t=0.0, degree=1)
 
 Gamma_u_0 = DirichletBC(V_u, u_R, boundaries, 1)
 Gamma_u_1 = DirichletBC(V_u, u_L, boundaries, 2)
 Gamma_u_2 = DirichletBC(V_u, u_T, boundaries, 3)
 Gamma_u_3 = DirichletBC(V_u, u_B, boundaries, 4)
-bc_u = [Gamma_u_0, Gamma_u_1]
+bc_u = [Gamma_u_2, Gamma_u_3]
 
 # bc - alpha (zero damage)
-Gamma_alpha_0 = DirichletBC(V_alpha, 0.0, boundaries, 1)
-Gamma_alpha_1 = DirichletBC(V_alpha, 0.0, boundaries, 2)
-Gamma_alpha_2 = DirichletBC(V_alpha, 0.0, boundaries, 3)
-Gamma_alpha_3 = DirichletBC(V_alpha, 0.0, boundaries, 4)
-#Gamma_alpha_4 = DirichletBC(V_alpha, 1.0, mesh_fun, 101)
-bc_alpha = [Gamma_alpha_0, Gamma_alpha_1]#, Gamma_alpha_2, Gamma_alpha_3,Gamma_alpha_4]
+Gamma_alpha_0 = DirichletBC(V_alpha, Constant(1.0), "near(x[0], 0)")
+Gamma_alpha_1 = DirichletBC(V_alpha, Constant(0.0), boundaries, 2)
+Gamma_alpha_2 = DirichletBC(V_alpha, Constant(0.0), boundaries, 3)
+Gamma_alpha_3 = DirichletBC(V_alpha, Constant(0.0), boundaries, 4)
+Gamma_alpha_4 = DirichletBC(V_alpha, Constant(1.0), mesh_fun, 101)
+bc_alpha = [Gamma_alpha_0, Gamma_alpha_1,Gamma_alpha_2, Gamma_alpha_3,Gamma_alpha_4]
 #====================================================================================
 # Define  problem and solvers
 #====================================================================================
@@ -401,65 +400,54 @@ dissipated_energy = Gc/float(c_w)*(w(alpha_)/ell + ell*inner(grad(alpha_), grad(
 
 total_energy = elastic_energy + dissipated_energy - external_work
 
-# Residual and Jacobian of elasticity problem
-F_u = derivative(total_energy, u_, u_t)
-J_e = derivative(F_u, u_, u)
+# First derivatives of energies (Residual)
+Du_total_energy = derivative(total_energy, u_, u_t)
+Dalpha_total_energy = derivative(total_energy, alpha_, alpha_t)
 
-# Residual and Jacobian of damage problem
-F_d = derivative(total_energy, alpha_, alpha_t)
-J_d = derivative(F_d, alpha_, alpha)
-
-
-# Writing tangent problems in term of test and trial functions for matrix assembly
-E_du     = replace(F_u,{u_:u})
-E_dalpha = replace(F_d,{alpha_:alpha})
-
-# Linear and bilinear forms for each problem
-a_u, l_u = lhs(E_du), rhs(E_du)
-a_alpha, l_alpha = lhs(E_dalpha), rhs(E_dalpha)
-
-
+# Second derivatives of energies (Jacobian)
+J_u = derivative(Du_total_energy, u_, u)
+J_alpha = derivative(Dalpha_total_energy, alpha_, alpha)
 
 # Variational problem for the displacement
-problem_u = LinearVariationalProblem(lhs(E_du), rhs(E_du), u_, bc_u)
+problem_u = NonlinearVariationalProblem(Du_total_energy, u_, bc_u, J_u)
 
 # Variational problem for the damage (non-linear to use variational inequality solvers of petsc)
 class DamageProblem(OptimisationProblem):
 
 	def __init__(self):
 		OptimisationProblem.__init__(self)
-		self.total_energy = total_energy
-		self.F_d = F_d
-		self.J_d = J_d
-		self.alpha_ = alpha_
-		self.bc_alpha = bc_alpha
+
 
 	def f(self, x):
-		self.alpha_.vector()[:] = x
-                return assemble(self.total_energy)
+		alpha_.vector()[:] = x
+                return assemble(total_energy)
 
 	def F(self, b, x):
-                self.alpha_.vector()[:] = x
-                assemble(self.F_d, b)
-                for bc in self.bc_alpha:
+                alpha_.vector()[:] = x
+		print alpha_.vector().array()
+                assemble(Dalpha_total_energy, b)
+                for bc in bc_alpha:
                     bc.apply(b)
+		    #print bc
+		    #print bc_alpha		
 
 	def J(self, A, x):
-                self.alpha_.vector()[:] = x
-                assemble(self.J_d, A)
-                for bc in self.bc_alpha:
+                alpha_.vector()[:] = x
+                assemble(J_alpha, A)
+                for bc in bc_alpha:
                     bc.apply(A)
 
 problem_alpha = DamageProblem()
 #-------------------
 # Solver setup
 #-------------------
-# Set up the solvers                                        
-solver_u = LinearVariationalSolver(problem_u)
-solver_u.parameters.update(solver_u_parameters)
+# Set up the solvers  
+solver_u = NonlinearVariationalSolver(problem_u)                 
+#solver_u.parameters.update(solver_u_parameters)
 #info(solver_u.parameters, True)
 solver_alpha = PETScTAOSolver()
 solver_alpha.parameters.update(solver_alpha_parameters)
+
 alpha_lb = interpolate(Expression("0.", degree =1), V_alpha) # lower bound, set to 0
 alpha_ub = interpolate(Expression("1.", degree =1), V_alpha) # upper bound, set to 1
 #info(solver_alpha.parameters,True) # uncomment to see available parameters
@@ -482,8 +470,8 @@ forces = np.zeros((len(load_multipliers),2))
 for (i_t, t) in enumerate(load_multipliers):
 
     print"\033[1;32m--- Time step %d: t = %g ---\033[1;m" % (i_t, t)
-    u_R.t = t*ut
-    #u_B.t = t*ut
+    u_T.t = t*ut
+    u_B.t = t*ut
     # Alternate mininimization
     # Initialization
     iter = 1; err_alpha = 1
@@ -491,8 +479,18 @@ for (i_t, t) in enumerate(load_multipliers):
     while err_alpha>tolerance and iter<max_iterations:
         # solve elastic problem
         solver_u.solve()
+
+        plt.figure(2)	
+        plot(u_, title = "Displacement %.4f"%(ut*t)) 
+        plt.show() 
+
         # solve damage problem
         solver_alpha.solve(problem_alpha, alpha_.vector(), alpha_lb.vector(), alpha_ub.vector())
+	solver_alpha.parameters.update(solver_alpha_parameters)
+        # plot the damage fied
+        plt.figure(3)	
+        plot(alpha_, range_min = 0., range_max = 1., key = "alpha", title = "Damage at loading %.4f"%(ut*t)) 
+        plt.show()  
 
        	# test error
        	err_alpha = (alpha_.vector() - alpha_0.vector()).norm('linf')
@@ -507,11 +505,8 @@ for (i_t, t) in enumerate(load_multipliers):
     # Update the lower bound to account for the irreversibility
     alpha_lb.vector()[:] = alpha_.vector()
     
-    # plot the damage fied
-    plt.figure(2)	
-    plot(alpha_)#, range_min = 0., range_max = 1., key = "alpha", title = "Damage at loading %.4f"%(ut*t)) 
-    plt.show()   
-    plt.interactive(True)
+ 
+    plt.interactive(False)
     #=======================================================================================
     # Some post-processing
     #=======================================================================================
