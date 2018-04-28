@@ -26,7 +26,7 @@ import os
 import matplotlib.pyplot as plt
 
 pressure_max_list=[ 0.1]
-hsize_list = [0.001 ]
+hsize_list = [0.01 ]
 colors_i = ['r', 'b', 'g','m','c','k']
 
 Volume_num=np.zeros((len(pressure_max_list), 4)) #4 is thelength of ell_list
