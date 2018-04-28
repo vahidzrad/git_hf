@@ -5,11 +5,11 @@ from dolfin import *
 
 
 
-def SneddonWidth(p_max):
+def SneddonWidth(p_max,E, nu):
 	#p_max=0.250
 	sigma_min=0.
-	nu=0.3
-	E=10.
+	#nu=0.3
+	#E=10.
 	l_crack=0.2
 
 	x=np.linspace(0.0, l_crack, 100)

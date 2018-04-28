@@ -45,7 +45,7 @@ snes_solver_parameters_bounds = {"nonlinear_solver": "snes",
                                           "error_on_nonconvergence": False}}
 
 
-def Fracking(hsize, pressure_max, ell):
+def Fracking(hsize, pressure_max, ell,E, nu):
 	#=======================================================================================
 	# Input date
 	#=======================================================================================
@@ -57,8 +57,8 @@ def Fracking(hsize, pressure_max, ell):
 
 	# Material constants
 	#ell = Constant(4 * hsize) # internal length scale
-	E = 10. # Young modulus
-	nu = 0.3 # Poisson ratio
+	#E = 10. # Young modulus
+	#nu = 0.3 # Poisson ratio
 
 	biot= 0. #Biot coefficient
 

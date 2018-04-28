@@ -29,6 +29,9 @@ pressure_max_list=[ 0.1]
 hsize_list = [0.01 ]
 colors_i = ['r', 'b', 'g','m','c','k']
 
+E = 10. # Young modulus
+nu = 0.3 # Poisson ratio
+
 Volume_num=np.zeros((len(pressure_max_list), 4)) #4 is thelength of ell_list
 Volume_analy=np.zeros((len(pressure_max_list), 4)) #4 is thelength of ell_list
 
@@ -43,11 +46,11 @@ for (k, pressure_max) in enumerate(pressure_max_list):
 		fig = plt.figure()
 		for (i, ell) in enumerate(ell_list):
 		    	# Varying the hsize mesh size
-		       	Fracking(hsize, pressure_max, ell)
+		       	Fracking(hsize, pressure_max, ell,E, nu)
 			
 
 			arr_Coor_plt_X, arr_li, Volume = Opening(hsize,ell)
-			x, x_, width, width_, volumeAnalytical = SneddonWidth(pressure_max) 
+			x, x_, width, width_, volumeAnalytical = SneddonWidth(pressure_max,E, nu) 
 
 			print "Numeric Volume=%g"%Volume
 			print "Analytical Volume=%g"%volumeAnalytical
