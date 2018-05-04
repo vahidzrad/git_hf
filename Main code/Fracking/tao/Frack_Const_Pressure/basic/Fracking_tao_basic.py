@@ -63,7 +63,7 @@ solver_u_parameters ={"linear_solver", "mumps", # prefer "superlu_dist" or "mump
 # Geometry
 L = 4.0 # length
 H = 4.0 # height
-hsize= 0.01 # target cell size
+hsize= 0.001 # target cell size
 meshname="fracking_hsize%g" % (hsize)
 
 # Material constants
@@ -462,7 +462,19 @@ parameters.parse()
 
 
 # Set up the solvers                                        
-solver_u = NonlinearVariationalSolver(problem_u)                 
+solver_u = NonlinearVariationalSolver(problem_u)  
+
+prm = solver_u.parameters
+prm["newton_solver"]["absolute_tolerance"] = 1E-8
+prm["newton_solver"]["relative_tolerance"] = 1E-7
+prm["newton_solver"]["maximum_iterations"] = 25
+prm["newton_solver"]["relaxation_parameter"] = 1.0
+prm["newton_solver"]["preconditioner"] = "default"
+prm["newton_solver"]["linear_solver"] = "mumps"
+
+
+set_log_level(PROGRESS)
+               
 
 
 solver_alpha = PETScTAOSolver()
