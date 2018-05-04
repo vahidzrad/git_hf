@@ -460,7 +460,16 @@ def Fracking(hsize, pressure_max, ell,E, nu):
 
 	# Set up the solvers                                        
 	solver_u = NonlinearVariationalSolver(problem_u)                 
+	prm = solver_u.parameters
+	prm["newton_solver"]["absolute_tolerance"] = 1E-8
+	prm["newton_solver"]["relative_tolerance"] = 1E-7
+	prm["newton_solver"]["maximum_iterations"] = 25
+	prm["newton_solver"]["relaxation_parameter"] = 1.0
+	prm["newton_solver"]["preconditioner"] = "default"
+	prm["newton_solver"]["linear_solver"] = "mumps"
 
+
+	set_log_level(PROGRESS)
 
 	solver_alpha = PETScTAOSolver()
 
