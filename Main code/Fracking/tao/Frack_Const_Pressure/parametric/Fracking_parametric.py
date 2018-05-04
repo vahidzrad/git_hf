@@ -25,7 +25,7 @@ from Sneddon import SneddonWidth
 import os
 import matplotlib.pyplot as plt
 
-pressure_max_list=[ 10.]
+pressure_max_list=[ 1.]
 hsize_list = [0.01 ]
 colors_i = ['r', 'b', 'g','m','c','k']
 
@@ -37,7 +37,7 @@ Volume_analy=np.zeros((len(pressure_max_list), 4)) #4 is thelength of ell_list
 
 for (k, pressure_max) in enumerate(pressure_max_list):
 	for (j, hsize) in enumerate(hsize_list):
-		ell_list = [1*hsize, 2*hsize, 3*hsize, 4*hsize]
+		ell_list = [24*hsize, 26*hsize, 28*hsize, 30*hsize]
 
 		#Volume_num=np.zeros((len(hsize_list), len(ell_list)))
 		#Volume_analy=np.zeros((len(hsize_list), len(ell_list)))
