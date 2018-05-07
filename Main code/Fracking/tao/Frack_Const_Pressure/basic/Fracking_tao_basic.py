@@ -63,7 +63,7 @@ solver_u_parameters ={"linear_solver", "mumps", # prefer "superlu_dist" or "mump
 # Geometry
 L = 4.0 # length
 H = 4.0 # height
-hsize= 0.001 # target cell size
+hsize= 0.01 # target cell size
 meshname="fracking_hsize%g" % (hsize)
 
 # Material constants
@@ -90,6 +90,10 @@ else:
 
 
 ModelB= False 
+if not ModelB:  # Model A (isotropic model)
+	Model = 'Isotropic'
+else:  # Model B (Amor's model)
+	Model = 'Amor'
 
 # Stopping criteria for the alternate minimization
 max_iterations = 50
@@ -290,7 +294,7 @@ def psi_B(u_,alpha_):
 	"""
 	The strain energy density for model B
 	"""
-	return  0.5*(lmbda+2/3*mu) * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2 + 0.5*(lmbda+2/3*mu) * ( angle_bracket_minus(tr(dev_eps(u_))**2))
+	return  g(alpha_) * ( 0.5*K * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2) + 0.5*K * ( angle_bracket_minus(tr(dev_eps(u_))**2))
 #----------------------------------------------------------------------------------------
 
 if not ModelB:  # Model A (isotropic model)
@@ -303,7 +307,7 @@ else:  # Model B (Amor's model)
 #=======================================================================================
 # others definitions
 #=======================================================================================
-prefix = "%s-L%s-H%.2f-S%.4f-l%.4f"%(law,L,H,hsize, ell)
+prefix = "%s-%s-L%s-H%.2f-S%.4f-l%.4f"%(law,Model,L,H,hsize, ell)
 save_dir = "Fracking_result/" + prefix + "/"
 
 if os.path.isdir(save_dir):
@@ -577,7 +581,7 @@ output_file_alpha = HDF5File(mpi_comm_world() , save_dir+"alpha_4_opening.h5", "
 output_file_alpha.write(alpha_, "solution")
 output_file_alpha.close()
 
-arr_Coor_plt_X, arr_li, Volume = Opening(hsize, ell, law)
+arr_Coor_plt_X, arr_li, Volume = Opening(hsize,ell, Model, law)
 
 plt.plot(arr_Coor_plt_X, arr_li)
 plt.savefig(save_dir+'/opening.png')
