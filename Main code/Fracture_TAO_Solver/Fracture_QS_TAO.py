@@ -87,14 +87,20 @@ else:
 	Gc = gc #??
 
 
-ModelB= True 
+ModelB= False 
+if not ModelB:  # Model A (isotropic model)
+	Model = 'Isotropic'
+else:  # Model B (Amor's model)
+	Model = 'Amor'
+
+
 
 # Stopping criteria for the alternate minimization
 max_iterations = 100
 tolerance = 1.0e-8
 
 # Loading
-ut = 50. # reference value for the loading (imposed displacement)
+ut = 6. # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 load_min = 0. # load multiplier min value
 load_max = 1. # load multiplier max value
@@ -288,8 +294,7 @@ def psi_B(u_,alpha_):
 	The strain energy density for model B
 	"""
 	K = lmbda+2/3*mu
-	return  0.5*K * ( angle_bracket_plus(tr(dev_eps(u_))))**2 \
-		+ mu*dev_eps(u_)**2 + 0.5*K * ( angle_bracket_minus(tr(dev_eps(u_))))**2
+	return  g(alpha_) * ( 0.5*K * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2) + 0.5*K * ( angle_bracket_minus(tr(dev_eps(u_))**2))
 #----------------------------------------------------------------------------------------
 
 if not ModelB:  # Model A (isotropic model)
@@ -302,7 +307,7 @@ else:  # Model B (Amor's model)
 #=======================================================================================
 # others definitions
 #=======================================================================================
-prefix = "%s-L%s-H%.2f-S%.4f-l%.4f"%(law,L,H,hsize, ell)
+prefix = "%s-%s-L%s-H%.2f-S%.4f-l%.4f"%(law,Model,L,H,hsize, ell)
 save_dir = "Fracture_QS_result/" + prefix + "/"
 
 if os.path.isdir(save_dir):
@@ -452,8 +457,16 @@ parameters.parse()
 #-------------------
 # Set up the solvers  
 solver_u = NonlinearVariationalSolver(problem_u)                 
-#solver_u.parameters.update(solver_u_parameters)
-#info(solver_u.parameters, True)
+prm = solver_u.parameters
+prm["newton_solver"]["absolute_tolerance"] = 1E-8
+prm["newton_solver"]["relative_tolerance"] = 1E-7
+prm["newton_solver"]["maximum_iterations"] = 25
+prm["newton_solver"]["relaxation_parameter"] = 1.0
+prm["newton_solver"]["preconditioner"] = "default"
+prm["newton_solver"]["linear_solver"] = "mumps"
+#set_log_level(PROGRESS)
+
+
 solver_alpha = PETScTAOSolver()
 
 
