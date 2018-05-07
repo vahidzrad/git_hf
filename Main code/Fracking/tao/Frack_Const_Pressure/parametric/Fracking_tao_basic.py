@@ -469,7 +469,7 @@ def Fracking(hsize, pressure_max, ell,E, nu):
 	prm["newton_solver"]["linear_solver"] = "mumps"
 
 
-	set_log_level(PROGRESS)
+	#set_log_level(PROGRESS)
 
 	solver_alpha = PETScTAOSolver()
 
