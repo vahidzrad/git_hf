@@ -58,7 +58,7 @@ solver_u_parameters ={"linear_solver", "mumps", # prefer "superlu_dist" or "mump
 #=======================================================================================
 # Fracking Function
 #=======================================================================================
-def Fracking(hsize, pressure_max, ell,E, nu):
+def Fracking(hsize, pressure_max, ell,E, nu, Model, law):
 	#=======================================================================================
 	# Input date
 	#=======================================================================================
@@ -70,8 +70,8 @@ def Fracking(hsize, pressure_max, ell,E, nu):
 
 	# Material constants
 	#ell = Constant(4 * hsize) # internal length scale
-	E = 10. # Young modulus
-	nu = 0.3 # Poisson ratio
+	#E = 10. # Young modulus
+	#nu = 0.3 # Poisson ratio
 
 	biot= 0. #Biot coefficient
 
@@ -79,7 +79,7 @@ def Fracking(hsize, pressure_max, ell,E, nu):
 
 	gc = 1. # fracture toughness
 	k_ell = Constant(1.0e-12) # residual stiffness
-	law = "AT1"
+	#law = "AT1"
 
 	# effective toughness 
 	if law == "AT2":  
@@ -92,6 +92,10 @@ def Fracking(hsize, pressure_max, ell,E, nu):
 	Gc=1.
 
 	ModelB= False 
+	if not ModelB:  # Model A (isotropic model)
+		Model = 'Isotropic'
+	else:  # Model B (Amor's model)
+		Model = 'Amor'
 
 	# Stopping criteria for the alternate minimization
 	max_iterations = 50
@@ -291,7 +295,7 @@ def Fracking(hsize, pressure_max, ell,E, nu):
 		"""
 		The strain energy density for model B
 		"""
-		return  0.5*(lmbda+2/3*mu) * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2 + 0.5*(lmbda+2/3*mu) * ( angle_bracket_minus(tr(dev_eps(u_))**2))
+		return  g(alpha_) * ( 0.5*K * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2) + 0.5*K * ( angle_bracket_minus(tr(dev_eps(u_))**2))
 	#----------------------------------------------------------------------------------------
 
 	if not ModelB:  # Model A (isotropic model)
@@ -304,7 +308,7 @@ def Fracking(hsize, pressure_max, ell,E, nu):
 	#=======================================================================================
 	# others definitions
 	#=======================================================================================
-	prefix = "%s-L%s-H%.2f-S%.4f-l%.4f"%(law,L,H,hsize, ell)
+	prefix = "%s-%s-L%s-H%.2f-S%.4f-l%.4f"%(law,Model,L,H,hsize, ell)
 	save_dir = "Fracking_result/" + prefix + "/"
 
 	if os.path.isdir(save_dir):
