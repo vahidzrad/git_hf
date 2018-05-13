@@ -66,7 +66,7 @@ solver_u_parameters ={"linear_solver", "mumps", # prefer "superlu_dist" or "mump
 # Geometry
 L = 4.0 # length
 H = 4.0 # height
-hsize= 0.01 # target cell size
+hsize= 0.05 # target cell size
 meshname="fracking_hsize%g" % (hsize)
 
 # Material constants
@@ -80,7 +80,7 @@ PlaneStress= False
 
 gc = 1. # fracture toughness
 k_ell = Constant(1.0e-12) # residual stiffness
-law = "AT1"
+law = "AT2"
 
 # effective toughness 
 if law == "AT2":  
@@ -94,14 +94,14 @@ else:
 ModelB= False 
 
 # Stopping criteria for the alternate minimization
-max_iterations = 50
+max_iterations = 200
 tolerance = 1.0e-5
 
 # Loading
-ut = 2e-3 # reference value for the loading (imposed displacement)
+ut = 1. # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 pressure_min = 0. # load multiplier min value
-pressure_max = 12. # load multiplier max value
+pressure_max = 1. # load multiplier max value
 pressure_steps = 10 # number of time steps
 
 WheelerApproach= True
@@ -130,26 +130,49 @@ geofile = \
 		lc = DefineNumber[ %g, Name "Parameters/lc" ];
 		H = 4;
 		L = 4;
-                Point(1) = {0, 0, 0, 10*lc};
-                Point(2) = {L, 0, 0, 10*lc};
-                Point(3) = {L, H, 0, 10*lc};
-                Point(4) = {0, H, 0, 10*lc};
-                Point(5) = {1.8, H/2, 0, 1*lc};
-                Point(6) = {2.2, H/2, 0, 1*lc};
+
+		r=0.1;
+		a=0.05;
+
+                Point(1) = {0, 0, 0, 1*lc};
+                Point(2) = {L, 0, 0, 1*lc};
+                Point(3) = {L, H, 0, 1*lc};
+                Point(4) = {0, H, 0, 1*lc};
+
+                Point(5) = {L/2, H/2+r+a, 0, 1*lc};
+                Point(6) = {L/2, H/2+r, 0, 1*lc};
+
+                Point(7) = {L/2, H/2-r, 0, 1*lc};
+                Point(8) = {L/2, H/2-r-a, 0, 1*lc};
+
+                Point(9) = {L/2, H/2, 0, 1*lc};
+
                 Line(1) = {1, 2};
                 Line(2) = {2, 3};
                 Line(3) = {3, 4};
                 Line(4) = {4, 1};
                 Line Loop(5) = {1, 2, 3, 4};
-		Plane Surface(30) = {5};
+
+
+		Circle(8) = {6, 9, 7};
+		Circle(9) = {7, 9, 6};
+		Line Loop(11) = {8, 9};
+		
+		Plane Surface(30) = {5,11};
+
 
 		Line(6) = {5, 6};
                 Line{6} In Surface{30};
 
+		Line(7) = {7, 8};
+                Line{7} In Surface{30};
 
 		Physical Surface(1) = {30};
 
 		Physical Line(101) = {6};
+		Physical Line(102) = {7};
+		Physical Line(103) = {8};
+		Physical Line(104) = {9};
 
 """%(hsize)
 
@@ -361,20 +384,28 @@ class Bottom(SubDomain):
     def inside(self, x, on_boundary):
         return near((x[1]) * 0.01, 0)
 
+class Void(SubDomain):
+    def inside(self, x, on_boundary):
+	return   x[0] <= 2.5 and x[0] >= 1.5  and  x[1] <= 2.5 and x[1] >= 1.5 and on_boundary
+
 # Initialize sub-domain instances
 right=Right()
 left=Left()
 top=Top()
 bottom=Bottom()
+void=Void()
+
 
 
 # define meshfunction to identify boundaries by numbers
-boundaries = MeshFunction("size_t", mesh, mesh.topology().dim() - 1)
+boundaries = FacetFunction("size_t", mesh)
 boundaries.set_all(9999)
 right.mark(boundaries, 1) # mark top as 1
 left.mark(boundaries, 2) # mark top as 2
 top.mark(boundaries, 3) # mark top as 3
 bottom.mark(boundaries, 4) # mark bottom as 4
+void.mark(boundaries, 5) # mark void as 5
+
 
 # Define new measure including boundary naming 
 ds = Measure("ds")[boundaries] # left: ds(1), right: ds(2)
@@ -397,9 +428,9 @@ rho = Function(V_p)  #density kg/m^3
 N = Function(V_p)    #N=R*T*(delta**2 * phi_r_delta_delta +2*delta*phi_r_delta + 1) # J/(Kg*K)*K-->m^2/s^2
 
 alpha_0 = Function(V_alpha)
-define_alpha_0=Expression("x[1] == 2. & x[0] <= 2.2 & x[0] >=1.8 ? 1.0 : 0.0", degree=1)
-alpha_0.interpolate(define_alpha_0) #added by Mostafa
-#alpha_0 = interpolate(Constant(0.0), V_alpha) # initial (known) alpha, undamaged everywhere.
+#define_alpha_0=Expression("x[1] == 2. & x[0] <= 2.2 & x[0] >=1.8 ? 1.0 : 0.0", degree=1)
+#alpha_0.interpolate(define_alpha_0) #added by Mostafa
+alpha_0 = interpolate(Constant(0.0), V_alpha) # initial (known) alpha, undamaged everywhere.
 P_0 = interpolate(Expression('Ini_P', Ini_P=Init_Pressure, degree=1), V_p)
 #=======================================================================================
 # Define initial time, density and N
@@ -424,7 +455,7 @@ N = interpolate(Expression('N', N= N_intial, degree=1), V_p)
 # Dirichlet boundary condition for a traction test boundary
 #=======================================================================================
 # bc - u (imposed displacement)
-u_R = zero_v
+u_R = Expression(("p", "0.",), p=0.0, degree=1)
 u_L = zero_v
 u_T = Expression(("0.", "p",), p=0.0, degree=1)
 u_B = Expression(("0.", "-p",), p=0.0, degree=1)
@@ -433,7 +464,7 @@ Gamma_u_0 = DirichletBC(V_u, u_R, boundaries, 1)
 Gamma_u_1 = DirichletBC(V_u, u_L, boundaries, 2)
 Gamma_u_2 = DirichletBC(V_u, u_T, boundaries, 3)
 Gamma_u_3 = DirichletBC(V_u, u_B, boundaries, 4)
-bc_u = [Gamma_u_2, Gamma_u_3]
+bc_u = [Gamma_u_0, Gamma_u_1]
 
 # bc - alpha (zero damage)
 Gamma_alpha_0 = DirichletBC(V_alpha, 0.0, boundaries, 1)
@@ -441,7 +472,8 @@ Gamma_alpha_1 = DirichletBC(V_alpha, 0.0, boundaries, 2)
 Gamma_alpha_2 = DirichletBC(V_alpha, 0.0, boundaries, 3)
 Gamma_alpha_3 = DirichletBC(V_alpha, 0.0, boundaries, 4)
 Gamma_alpha_4 = DirichletBC(V_alpha, 1.0, mesh_fun, 101)
-bc_alpha = [Gamma_alpha_0, Gamma_alpha_1, Gamma_alpha_2, Gamma_alpha_3,Gamma_alpha_4]
+Gamma_alpha_5 = DirichletBC(V_alpha, 1.0, mesh_fun, 102)
+bc_alpha = [Gamma_alpha_0, Gamma_alpha_1, Gamma_alpha_2, Gamma_alpha_3,Gamma_alpha_4, Gamma_alpha_5]
 
 ## bc - P (imposed pressure)
 P_C = Expression("p", p=0.0, degree=1)
@@ -450,7 +482,8 @@ Gamma_P_0 = DirichletBC(V_p, 0.0, boundaries, 1)
 Gamma_P_1 = DirichletBC(V_p, 0.0, boundaries, 2)
 Gamma_P_2 = DirichletBC(V_p, 0.0, boundaries, 3)
 Gamma_P_3 = DirichletBC(V_p, 0.0, boundaries, 4)
-Gamma_P_4 = DirichletBC(V_p, P_C, mesh_fun, 101)
+#Gamma_P_4 = DirichletBC(V_p, P_C, mesh_fun, 101)
+Gamma_P_4 = DirichletBC(V_p, P_C, boundaries, 5)
 bc_P = [Gamma_P_0, Gamma_P_1, Gamma_P_2, Gamma_P_3, Gamma_P_4]
 #====================================================================================
 # Define  problem and solvers
@@ -520,6 +553,13 @@ parameters.parse()
 
 # Set up the solvers                                        
 solver_u = NonlinearVariationalSolver(problem_u)                 
+prm = solver_u.parameters
+prm["newton_solver"]["absolute_tolerance"] = 1E-8
+prm["newton_solver"]["relative_tolerance"] = 1E-7
+prm["newton_solver"]["maximum_iterations"] = 25
+prm["newton_solver"]["relaxation_parameter"] = 1.0
+prm["newton_solver"]["preconditioner"] = "default"
+prm["newton_solver"]["linear_solver"] = "mumps"              
 
 solver_alpha = PETScTAOSolver()
 
@@ -542,7 +582,7 @@ solver_pressure = NonlinearVariationalSolver(problem_pressure)
 results = []
 file_alpha = File(save_dir+"/alpha.pvd") # use .pvd if .xdmf is not working
 file_u = File(save_dir+"/u.pvd") # use .pvd if .xdmf is not working
-
+file_p = File(save_dir+"/p.pvd") 
 #=======================================================================================
 # Solving at each timestep
 #=======================================================================================
@@ -554,32 +594,33 @@ forces = np.zeros((len(load_multipliers),2))
 for (i_p, p) in enumerate(load_multipliers):
 
     print"\033[1;32m--- Time step %d: time = %g, pressure_max = %g ---\033[1;m" % (i_p, i_p*DeltaT, p)
-    #u_T.t = t*ut
+    u_R.p = p*ut
     #u_B.t = t*ut
     P_C.p = p
 	
 
     iteration = 0; iter= 0 ; err_P = 1;  err_alpha = 1
     # Iterations
+
+    while  err_P>tolerance and iteration<max_iterations:
+    	# solve pressure problem
+	solver_pressure.solve()
+
+        rho=EqOfState(P_.vector().get_local().shape) 	#set the new density according new pressure
+        N=EqOfState_N(rho)			#set the new N according new pressure
+
+     	err_P = (P_.vector() - P_0.vector()).norm('linf')
+ 	if mpi_comm_world().rank == 0:
+        	print "Iteration:  %2d, pressure_Error: %2.8g, P_max: %.8g" %(iteration, err_P, P_.vector().max())
+        P_0.vector()[:] = P_.vector()
+        iteration += 1
+
+
     while err_alpha>tolerance and iter<max_iterations:
-    	while  err_P>tolerance and iteration<max_iterations:
-     		# solve elastic problem
-        	solver_u.solve()
-       		#solver_P.solve()
-		solver_pressure.solve()
-
-	        rho=EqOfState(P_.vector().get_local().shape) 	#set the new density according new pressure
-	        N=EqOfState_N(rho)			#set the new N according new pressure
-
-
-       		err_P = (P_.vector() - P_0.vector()).norm('linf')
-       		if mpi_comm_world().rank == 0:
-         		print "Iteration:  %2d, pressure_Error: %2.8g, P_max: %.8g" %(iteration, err_P, P_.vector().max())
-        	P_0.vector()[:] = P_.vector()
-        	iteration += 1
-
-
-
+     	# solve elastic problem
+        solver_u.solve()
+       	if mpi_comm_world().rank == 0:
+        	print "Elastic iteration: %2d" % (iter)
         # solve damage problem
 	solver_alpha.solve(problem_alpha, alpha_.vector(), alpha_lb.vector(), alpha_ub.vector())
        	# test error
@@ -628,6 +669,7 @@ for (i_p, p) in enumerate(load_multipliers):
     # Dump solution to file 
     file_alpha << (alpha_,p) 
     file_u << (u_,p) 
+    file_p << (P_,p) 
     # Save some global quantities as a function of the time 
     np.savetxt(save_dir+'/energies.txt', energies)
     np.savetxt(save_dir+'/forces.txt', forces)
