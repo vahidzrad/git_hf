@@ -25,8 +25,8 @@ from Sneddon import SneddonWidth
 import os
 import matplotlib.pyplot as plt
 
-pressure_max_list=[1]
-hsize_list = [0.04, 0.02, 0.01,0.005, 0.0025 ]
+pressure_max_list=[0.5, 1]
+hsize_list = [ 0.0075, 0.005]
 colors_i = ['r', 'b', 'g','m','c','k']
 
 E = 1. # Young modulus
@@ -38,20 +38,15 @@ if not ModelB:  # Model A (isotropic model)
 else:  # Model B (Amor's model)
 	Model = 'Amor'
 
-law='AT1'
+law='AT2'
 
 Volume_num  =np.zeros((max(len(pressure_max_list),len(hsize_list)), 4)) #4 is thelength of ell_list
 
 for (k, pressure_max) in enumerate(pressure_max_list):
 	fig = plt.figure()
 	for (j, hsize) in enumerate(hsize_list):
-		#ell_list = [100*hsize, 150*hsize, 200*hsize]
-		ell_list = [0.24]
-
-
-
-
-
+		ell_list = [8*hsize, 10*hsize]
+		#ell_list = [0.06]
 		for (i, ell) in enumerate(ell_list):
 		    	# Varying the hsize mesh size
 		       	Fracking(hsize, pressure_max, ell,E, nu, Model, law)
@@ -60,7 +55,7 @@ for (k, pressure_max) in enumerate(pressure_max_list):
 			print "Numeric Volume=%g"%Volume
 			Volume_num[j][i]=Volume
 
-			plt.plot(arr_Coor_plt_X, arr_li, label="$\ell=$ %g, $h=$ %g"%(round(ell,4), round(hsize,4)))
+			plt.plot(arr_Coor_plt_X, arr_li, label="$\ell=$ %g, $h=$ %g"%(round(ell,5), round(hsize,4)))
 
 	x, x_, width, width_, volumeAnalytical = SneddonWidth(pressure_max,E, nu) 
 	plt.plot(x, width, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[j])
@@ -73,7 +68,7 @@ for (k, pressure_max) in enumerate(pressure_max_list):
 
 	plt.legend(loc="best")
 	save_fig = "Fracking_result/"
-	plt.savefig(save_fig +"$%s, p=$%g"%(law, pressure_max)+".pdf")
+	plt.savefig(save_fig +"$%s, p=$%g, E=$%g "%(law, pressure_max,E)+".pdf")
 
 print "Numeric Volume=",Volume_num
 print "Analytical Volume=",volumeAnalytical

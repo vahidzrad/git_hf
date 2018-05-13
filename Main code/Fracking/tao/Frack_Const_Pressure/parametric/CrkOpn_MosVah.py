@@ -35,15 +35,15 @@ set_log_level(INFO)
 
 
 
-def Opening(hsize,ell):
+def Opening(hsize,ell, Model, law):
 	# Geometry
 	L = 4.0 # length
 	H = 4.0 # height
 	# Material constants
 	#ell = Constant(4*hsize) # internal length scale
-	law = "AT1"
+	#law = "AT1"
 
-	prefix = "%s-L%s-H%.2f-S%.4f-l%.4f"%(law,L,H,hsize, ell)
+	prefix = "%s-%s-L%s-H%.2f-S%.4f-l%.4f"%(law,Model,L,H,hsize, ell)
 	save_dir = "Fracking_result/" + prefix + "/"
 
 
