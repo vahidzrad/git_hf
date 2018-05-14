@@ -52,12 +52,12 @@ g6solver_alpha_parameters={"method", "tron", 			# when using gpcg make sure that
 # Geometry
 L = 4.0 # length
 H = 4.0 # height
-hsize= 0.02 # target cell size
+hsize= 0.05 # target cell size
 meshname="fracking_hsize%g" % (hsize)
 
 # Material constants
-ell = Constant(4 * hsize) # internal length scale
-E = 10. # Young modulus
+ell = Constant(2 * hsize) # internal length scale
+E = 6.e3 # Young modulus
 nu = 0.3 # Poisson ratio
 
 biot= 0. #Biot coefficient
@@ -80,29 +80,29 @@ else:
 ModelB= False 
 
 # Stopping criteria for the alternate minimization
-max_iterations = 50
+max_iterations = 200
 tolerance = 1.0e-5
 
 # Loading
-ut = 1. # reference value for the loading (imposed displacement)
+ut = 0.5 # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 pressure_min = 0. # load multiplier min value
-pressure_max = 1.5 # load multiplier max value
+pressure_max = 0.1 # load multiplier max value
 pressure_steps = 10 # number of time steps
 
-WheelerApproach= True
+WheelerApproach= False
 #====================================================================================
 # To define  pressure field
 #====================================================================================
-biot=0.75
-phi=0.01 #porosity
-K_f=1 #is the pore fluid bulk modulus
-K_s=1 #is the porous medium solid grain bulk modulus
+biot=1.
+phi=0.2 #porosity
+K_f=0.625e3 #is the pore fluid bulk modulus #MPa
+K_s=10e3 #is the porous medium solid grain bulk modulus #MPa
 
-M_biot= 68.7 #1./M_biot=phi/K_f+(1-phi)/K_s #MPa
+M_biot= 2.5e3 #1./M_biot=phi/K_f+(alpha-phi)/K_s #MPa
 
-kappa= 9.8e-9 #is the permeability of the rock
-mu_dynamic= 0.0098  #is the dynamic viscosity of the fluid
+kappa= 2.83e-22 #is the permeability of the rock #m^2
+mu_dynamic= 4e-16  #is the dynamic viscosity of the fluid #MPa
 
 f = Constant(0)
 
@@ -446,7 +446,7 @@ Gamma_alpha_5 = DirichletBC(V_alpha, 1.0, mesh_fun, 102)
 bc_alpha = [Gamma_alpha_0, Gamma_alpha_1, Gamma_alpha_2, Gamma_alpha_3,Gamma_alpha_4, Gamma_alpha_5]
 
 ## bc - P (imposed pressure)
-P_C = Expression("1*p", p=0.0, degree=1)
+P_C = Expression("p", p=0.0, degree=1)
 
 Gamma_P_0 = DirichletBC(V_p, 0.0, boundaries, 1)
 Gamma_P_1 = DirichletBC(V_p, 0.0, boundaries, 2)
@@ -524,7 +524,7 @@ solver_u = NonlinearVariationalSolver(problem_u)
 prm = solver_u.parameters
 prm["newton_solver"]["absolute_tolerance"] = 1E-8
 prm["newton_solver"]["relative_tolerance"] = 1E-7
-prm["newton_solver"]["maximum_iterations"] = 25
+prm["newton_solver"]["maximum_iterations"] = 200
 prm["newton_solver"]["relaxation_parameter"] = 1.0
 prm["newton_solver"]["preconditioner"] = "default"
 prm["newton_solver"]["linear_solver"] = "mumps"              
