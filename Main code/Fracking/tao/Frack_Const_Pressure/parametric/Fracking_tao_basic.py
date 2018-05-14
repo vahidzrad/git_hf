@@ -102,13 +102,13 @@ def Fracking(hsize, pressure_max, ell,E, nu, Model, law):
 	tolerance = 1.0e-5
 
 	# Loading
-	ut = 2e-3 # reference value for the loading (imposed displacement)
+	ut = 0.0 # reference value for the loading (imposed displacement)
 	body_force = Constant((0.,0.))  # bulk load
 	pressure_min = 0. # load multiplier min value
 	#pressure_max = 1. # load multiplier max value
-	pressure_steps = 20 # number of time steps
+	pressure_steps = 10 # number of time steps
 
-	WheelerApproach= True
+	WheelerApproach= False
 
 	#=======================================================================================
 	# Geometry and mesh generation
@@ -396,7 +396,7 @@ def Fracking(hsize, pressure_max, ell,E, nu, Model, law):
 	Gamma_u_1 = DirichletBC(V_u, u_L, boundaries, 2)
 	Gamma_u_2 = DirichletBC(V_u, u_T, boundaries, 3)
 	Gamma_u_3 = DirichletBC(V_u, u_B, boundaries, 4)
-	bc_u = [Gamma_u_2, Gamma_u_3]
+	bc_u = [Gamma_u_0, Gamma_u_1, Gamma_u_2, Gamma_u_3]
 
 	# bc - alpha (zero damage)
 	Gamma_alpha_0 = DirichletBC(V_alpha, 0.0, boundaries, 1)

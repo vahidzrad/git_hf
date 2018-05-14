@@ -25,8 +25,8 @@ from Sneddon import SneddonWidth
 import os
 import matplotlib.pyplot as plt
 
-pressure_max_list=[0.5, 1]
-hsize_list = [ 0.0075, 0.005]
+pressure_max_list=[ 0.5]
+hsize_list = [ 0.01,0.005, 0.0025]
 colors_i = ['r', 'b', 'g','m','c','k']
 
 E = 1. # Young modulus
@@ -45,8 +45,8 @@ Volume_num  =np.zeros((max(len(pressure_max_list),len(hsize_list)), 4)) #4 is th
 for (k, pressure_max) in enumerate(pressure_max_list):
 	fig = plt.figure()
 	for (j, hsize) in enumerate(hsize_list):
-		ell_list = [8*hsize, 10*hsize]
-		#ell_list = [0.06]
+		ell_list = [10*hsize, 11*hsize, 12*hsize]
+		#ell_list = [0.13]
 		for (i, ell) in enumerate(ell_list):
 		    	# Varying the hsize mesh size
 		       	Fracking(hsize, pressure_max, ell,E, nu, Model, law)
