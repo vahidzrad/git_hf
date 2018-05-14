@@ -64,17 +64,17 @@ solver_u_parameters ={"linear_solver", "mumps", # prefer "superlu_dist" or "mump
 # Geometry
 L = 4.0 # length
 H = 4.0 # height
-hsize= 0.1 # target cell size
+hsize= 0.05 # target cell size
 meshname="fracture_hsize%g" % (hsize)
 
 # Material constants
 ell = Constant(2* hsize) # internal length scale
-E = 10. # Young modulus
+E = 6e3 # Young modulus MPa
 nu = 0.3 # Poisson ratio
 
 PlaneStress= False
 
-gc = 1. # fracture toughness
+gc = 1.0 # fracture toughness MPa.m^0.5
 k_ell = Constant(1.0e-12) # residual stiffness
 law = "AT2"
 
@@ -97,10 +97,10 @@ else:  # Model B (Amor's model)
 
 # Stopping criteria for the alternate minimization
 max_iterations = 100
-tolerance = 1.0e-8
+tolerance = 1.0e-6
 
 # Loading
-ut = 6. # reference value for the loading (imposed displacement)
+ut = 3.e-2 # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 load_min = 0. # load multiplier min value
 load_max = 1. # load multiplier max value
