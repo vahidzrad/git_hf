@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 def EqOfState(pressu):
-	pressu=pressu#*1e6*100 #centipascal, #1 pascal is equal to 10 decipascal, or 100 centipascal
+	pressu=np.array(pressu)*1e6#*100 #centipascal, #1 pascal is equal to 10 decipascal, or 100 centipascal
 
 	R = 0.1889241*1000 #J/(kgK)
 	T_c = 304.1282 #K
@@ -33,7 +33,7 @@ def EqOfState(pressu):
 	#############################################################################################
 	load_steps=1000
 	temprature=[25+273.15, 45+273.15,65+273.15] # Celsius+273.15=Kelvin
-	rho_vector = np.linspace(0.01, 1000, load_steps) #kg/m^3
+	rho_vector = np.linspace(0.01, 10000, load_steps) #kg/m^3
 
 	i_t=len(temprature)
 	i_b=len(rho_vector)
@@ -89,6 +89,7 @@ def EqOfState(pressu):
 			#print phi_r_delta
 			#print (1+phi_r_delta)*(rho*R*T)
 			pressure[i,j+1]=(1+delta*phi_r_delta)*(rho*R*T) # Pa=N/m^2
+			#print pressure
 
 			N[i,j+1]=R*T*(delta**2 * phi_r_delta_delta +2*delta*phi_r_delta + 1) # J/(Kg*K)*K-->J/9.806N-->1/9.806 m
 
@@ -99,10 +100,11 @@ def EqOfState(pressu):
 	#plt.plot(pressure[2,:]/1e6, np.r_[0, rho_vector],'g^--',label='T=65')
 	#plt.xlabel('Pressure (MPa)')
 	#plt.ylabel('Density (kg/m^3)')
-	#plt.axis([0, 200, 0, 10000])
+	#plt.axis([0, 50, 0, 1100])
 	#plt.legend( loc='lower right', numpoints = 1 )
 
 	#plt.show()
+        #plt.interactive(False)
 
 	x = pressure[2,:] # 	Pressure with temprature 45
 	y = np.r_[0, rho_vector]

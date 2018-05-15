@@ -66,12 +66,12 @@ solver_u_parameters ={"linear_solver", "mumps", # prefer "superlu_dist" or "mump
 # Geometry
 L = 4.0 # length
 H = 4.0 # height
-hsize= 0.05 # target cell size
+hsize= 0.02 # target cell size
 meshname="fracking_hsize%g" % (hsize)
 
 # Material constants
-ell = Constant(4 * hsize) # internal length scale
-E = 10. # Young modulus
+ell = Constant(2 * hsize) # internal length scale
+E = 6.e3 # Young modulus
 nu = 0.3 # Poisson ratio
 
 biot= 0. #Biot coefficient
@@ -80,7 +80,7 @@ PlaneStress= False
 
 gc = 1. # fracture toughness
 k_ell = Constant(1.0e-12) # residual stiffness
-law = "AT2"
+law = "AT1"
 
 # effective toughness 
 if law == "AT2":  
@@ -101,7 +101,7 @@ tolerance = 1.0e-5
 ut = 1. # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 pressure_min = 0. # load multiplier min value
-pressure_max = 1. # load multiplier max value
+pressure_max = 300. # load multiplier max value
 pressure_steps = 10 # number of time steps
 
 WheelerApproach= True
@@ -110,10 +110,7 @@ WheelerApproach= True
 #====================================================================================
 biot=0.75
 phi=0.01 #porosity
-K_f=1 #is the pore fluid bulk modulus
-K_s=1 #is the porous medium solid grain bulk modulus
 
-M_biot= 68.7 #1./M_biot=phi/K_f+(1-phi)/K_s #MPa
 
 kappa= 9.8e-9 #is the permeability of the rock
 mu_dynamic= 0.0098  #is the dynamic viscosity of the fluid
@@ -455,16 +452,16 @@ N = interpolate(Expression('N', N= N_intial, degree=1), V_p)
 # Dirichlet boundary condition for a traction test boundary
 #=======================================================================================
 # bc - u (imposed displacement)
-u_R = Expression(("p", "0.",), p=0.0, degree=1)
+u_R = zero_v #Expression(("p", "0.",), p=0.0, degree=1)
 u_L = zero_v
-u_T = Expression(("0.", "p",), p=0.0, degree=1)
-u_B = Expression(("0.", "-p",), p=0.0, degree=1)
+u_T = zero_v#Expression(("0.", "p",), p=0.0, degree=1)
+u_B = zero_v#Expression(("0.", "-p",), p=0.0, degree=1)
 
 Gamma_u_0 = DirichletBC(V_u, u_R, boundaries, 1)
 Gamma_u_1 = DirichletBC(V_u, u_L, boundaries, 2)
 Gamma_u_2 = DirichletBC(V_u, u_T, boundaries, 3)
 Gamma_u_3 = DirichletBC(V_u, u_B, boundaries, 4)
-bc_u = [Gamma_u_0, Gamma_u_1]
+bc_u = [Gamma_u_0, Gamma_u_1, Gamma_u_2, Gamma_u_3]
 
 # bc - alpha (zero damage)
 Gamma_alpha_0 = DirichletBC(V_alpha, 0.0, boundaries, 1)
@@ -594,7 +591,7 @@ forces = np.zeros((len(load_multipliers),2))
 for (i_p, p) in enumerate(load_multipliers):
 
     print"\033[1;32m--- Time step %d: time = %g, pressure_max = %g ---\033[1;m" % (i_p, i_p*DeltaT, p)
-    u_R.p = p*ut
+    #u_R.p = p*ut
     #u_B.t = t*ut
     P_C.p = p
 	
@@ -605,6 +602,8 @@ for (i_p, p) in enumerate(load_multipliers):
     while  err_P>tolerance and iteration<max_iterations:
     	# solve pressure problem
 	solver_pressure.solve()
+	print P_
+	
 
         rho=EqOfState(P_.vector().get_local().shape) 	#set the new density according new pressure
         N=EqOfState_N(rho)			#set the new N according new pressure
