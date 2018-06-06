@@ -104,7 +104,7 @@ ut = 3.e-2 # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 load_min = 0. # load multiplier min value
 load_max = 1. # load multiplier max value
-load_steps = 10 # number of time steps
+load_steps = 200 # number of time steps
 
 #=======================================================================================
 # Geometry and mesh generation
@@ -386,14 +386,14 @@ alpha_0.interpolate(define_alpha_0) #added by Mostafa
 # bc - u (imposed displacement)
 u_R = zero_v#Expression(("t", "0.",), t=0.0, degree=1)
 u_L = zero_v
-u_T = Expression(("0.", "t",), t=0.0, degree=1)
-u_B = Expression(("0.", "-t",), t=0.0, degree=1)
+u_T = zero_v#Expression(("0.", "t",), t=0.0, degree=1)
+u_B = zero_v#Expression(("0.", "-t",), t=0.0, degree=1)
 
 Gamma_u_0 = DirichletBC(V_u, u_R, boundaries, 1)
 Gamma_u_1 = DirichletBC(V_u, u_L, boundaries, 2)
 Gamma_u_2 = DirichletBC(V_u, u_T, boundaries, 3)
 Gamma_u_3 = DirichletBC(V_u, u_B, boundaries, 4)
-bc_u = [Gamma_u_2, Gamma_u_3]
+bc_u = [Gamma_u_3]
 
 # bc - alpha (zero damage)
 Gamma_alpha_0 = DirichletBC(V_alpha, Constant(0.0), boundaries, 1)
@@ -402,11 +402,16 @@ Gamma_alpha_2 = DirichletBC(V_alpha, Constant(0.0), boundaries, 3)
 Gamma_alpha_3 = DirichletBC(V_alpha, Constant(0.0), boundaries, 4)
 Gamma_alpha_4 = DirichletBC(V_alpha, Constant(1.0), mesh_fun, 101)
 bc_alpha = [Gamma_alpha_0, Gamma_alpha_1,Gamma_alpha_2, Gamma_alpha_3,Gamma_alpha_4]
+
+# bc - sigma (imposed traction)
+sigma_T = Expression(("0.", "60*t",), t=0.0, degree=1) #traction on TOP boundary
+sigma_B = Expression(("0.", "-69.5*t",), t=0.0, degree=1) #traction on TOP boundary
+
 #====================================================================================
 # Define  problem and solvers
 #====================================================================================
 elastic_energy = psi(u_, alpha_)*dx
-external_work = dot(body_force, u_)*dx
+external_work = dot(body_force, u_)*dx + dot(sigma_T, u_)*ds(3)+ dot(sigma_B, u_)*ds(4)
 dissipated_energy = Gc/float(c_w)*(w(alpha_)/ell + ell*inner(grad(alpha_), grad(alpha_)))*dx 
 
 print c_w
@@ -458,9 +463,9 @@ parameters.parse()
 # Set up the solvers  
 solver_u = NonlinearVariationalSolver(problem_u)                 
 prm = solver_u.parameters
-prm["newton_solver"]["absolute_tolerance"] = 1E-8
-prm["newton_solver"]["relative_tolerance"] = 1E-7
-prm["newton_solver"]["maximum_iterations"] = 25
+prm["newton_solver"]["absolute_tolerance"] = 1E-6
+prm["newton_solver"]["relative_tolerance"] = 1E-6
+prm["newton_solver"]["maximum_iterations"] = 100
 prm["newton_solver"]["relaxation_parameter"] = 1.0
 prm["newton_solver"]["preconditioner"] = "default"
 prm["newton_solver"]["linear_solver"] = "mumps"
@@ -496,8 +501,11 @@ forces = np.zeros((len(load_multipliers),2))
 for (i_t, t) in enumerate(load_multipliers):
 
     print"\033[1;32m--- Time step %d: t = %g ---\033[1;m" % (i_t, t)
-    u_T.t = t*ut
-    u_B.t = t*ut
+    #u_T.t = t*ut
+    #u_B.t = t*ut
+    sigma_T.t = t
+    #sigma_B.t = t
+
     # Alternate mininimization
     # Initialization
     iter = 1; err_alpha = 1
