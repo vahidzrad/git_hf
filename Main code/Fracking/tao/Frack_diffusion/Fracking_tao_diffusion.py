@@ -52,7 +52,7 @@ g6solver_alpha_parameters={"method", "tron", 			# when using gpcg make sure that
 # Geometry
 L = 4.0 # length
 H = 4.0 # height
-hsize= 0.05 # target cell size
+hsize= 0.02 # target cell size
 meshname="fracking_hsize%g" % (hsize)
 
 # Material constants
@@ -87,7 +87,7 @@ tolerance = 1.0e-5
 ut = 0.5 # reference value for the loading (imposed displacement)
 body_force = Constant((0.,0.))  # bulk load
 pressure_min = 0. # load multiplier min value
-pressure_max = 0.1 # load multiplier max value
+pressure_max = 300. # load multiplier max value
 pressure_steps = 10 # number of time steps
 
 WheelerApproach= False
@@ -109,6 +109,7 @@ f = Constant(0)
 t_stop = H**2 *mu_dynamic/(kappa*M_biot)  # non dimensional time (s) 
 DeltaT=t_stop/pressure_steps 
 
+Q=2.5e-5
 #=======================================================================================
 # Geometry and mesh generation
 #=======================================================================================
@@ -424,16 +425,16 @@ P_0 = interpolate(Expression("0.0", degree=1), V_p)
 # Dirichlet boundary condition for a traction test boundary
 #=======================================================================================
 # bc - u (imposed displacement)
-u_R = Expression(("p", "0.",), p=0.0, degree=1)
+u_R = zero_v#Expression(("p", "0.",), p=0.0, degree=1)
 u_L = zero_v#Expression(("-2*p", "0.",), p=0.0, degree=1)
-u_T = Expression(("0.", "p",), p=0.0, degree=1)
+u_T = zero_v #Expression(("0.", "p",), p=0.0, degree=1)
 u_B = zero_v#Expression(("0.", "-p",), p=0.0, degree=1)
 
 Gamma_u_0 = DirichletBC(V_u, u_R, boundaries, 1)
 Gamma_u_1 = DirichletBC(V_u, u_L, boundaries, 2)
 Gamma_u_2 = DirichletBC(V_u, u_T, boundaries, 3)
 Gamma_u_3 = DirichletBC(V_u, u_B, boundaries, 4)
-bc_u = [Gamma_u_0, Gamma_u_1]#, Gamma_u_2, Gamma_u_3]
+bc_u = [Gamma_u_0, Gamma_u_1, Gamma_u_2, Gamma_u_3]
 
 # bc - alpha (zero damage)
 Gamma_alpha_0 = DirichletBC(V_alpha, 0.0, boundaries, 1)
@@ -453,12 +454,15 @@ Gamma_P_1 = DirichletBC(V_p, 0.0, boundaries, 2)
 Gamma_P_2 = DirichletBC(V_p, 0.0, boundaries, 3)
 Gamma_P_3 = DirichletBC(V_p, 0.0, boundaries, 4)
 #Gamma_P_4 = DirichletBC(V_p, P_C, mesh_fun, 101)
-Gamma_P_4 = DirichletBC(V_p, P_C, boundaries, 5)
-bc_P = [Gamma_P_0, Gamma_P_1, Gamma_P_2, Gamma_P_3, Gamma_P_4]
+#Gamma_P_4 = DirichletBC(V_p, P_C, boundaries, 5)
+bc_P = [Gamma_P_0, Gamma_P_1, Gamma_P_2, Gamma_P_3]#, Gamma_P_4]
+
+## bc - Q (imposed Flowrate)
+Q = Expression("p*DeltaT/t_stop*Q", p=0.0, Q=Q, DeltaT=DeltaT, t_stop=t_stop, degree=1)
 #====================================================================================
 # Define  problem and solvers
 #====================================================================================
-Pressure = 1./M_biot*P_*P*dx +DeltaT*kappa/mu_dynamic*inner(nabla_grad(P), nabla_grad(P_))*dx-(1/M_biot*P_0 +DeltaT*f)*P*dx # Wang et. al 2017 eq(8)
+Pressure = 1./M_biot*P_*P*dx +DeltaT*kappa/mu_dynamic*inner(nabla_grad(P), nabla_grad(P_))*dx-(1/M_biot*P_0 +DeltaT*f)*P*dx-DeltaT*Q*P*ds(5) # Wang et. al 2017 eq(8)
 #------------------------------------------------------------------------------------
 elastic_energy = psi(u_, alpha_)*dx
 external_work = dot(body_force, u_)*dx
@@ -522,8 +526,8 @@ parameters.parse()
 # Set up the solvers                                        
 solver_u = NonlinearVariationalSolver(problem_u)   
 prm = solver_u.parameters
-prm["newton_solver"]["absolute_tolerance"] = 1E-8
-prm["newton_solver"]["relative_tolerance"] = 1E-7
+prm["newton_solver"]["absolute_tolerance"] = 1E-6
+prm["newton_solver"]["relative_tolerance"] = 1E-6
 prm["newton_solver"]["maximum_iterations"] = 200
 prm["newton_solver"]["relaxation_parameter"] = 1.0
 prm["newton_solver"]["preconditioner"] = "default"
@@ -563,12 +567,12 @@ forces = np.zeros((len(load_multipliers),2))
 for (i_p, p) in enumerate(load_multipliers):
 
     print"\033[1;32m--- Time step %d: time = %g, pressure_max = %g ---\033[1;m" % (i_p, i_p*DeltaT, p)
-    u_R.p = p*ut
+    #u_R.p = p*ut
     #u_L.p = p#*ut
     #u_B.p = p#*ut
     #u_T.p = p*ut
     P_C.p = p
-	
+    Q.p = p
 
     iteration = 0; iter= 0 ; err_P = 1;  err_alpha = 1
     # Iterations
