@@ -26,7 +26,7 @@ import os
 import matplotlib.pyplot as plt
 
 pressure_max_list=[ 0.5]
-hsize_list = [ 0.01,0.005, 0.0025]
+hsize_list = [ 0.02, 0.01,0.005]
 colors_i = ['r', 'b', 'g','m','c','k']
 
 E = 1. # Young modulus
@@ -38,14 +38,15 @@ if not ModelB:  # Model A (isotropic model)
 else:  # Model B (Amor's model)
 	Model = 'Amor'
 
-law='AT2'
+law='AT1'
 
 Volume_num  =np.zeros((max(len(pressure_max_list),len(hsize_list)), 4)) #4 is thelength of ell_list
 
 for (k, pressure_max) in enumerate(pressure_max_list):
 	fig = plt.figure()
 	for (j, hsize) in enumerate(hsize_list):
-		ell_list = [10*hsize, 11*hsize, 12*hsize]
+		ell_list = [12*hsize, 13*hsize]
+		ell_coe = [12, 13]
 		#ell_list = [0.13]
 		for (i, ell) in enumerate(ell_list):
 		    	# Varying the hsize mesh size
@@ -55,10 +56,10 @@ for (k, pressure_max) in enumerate(pressure_max_list):
 			print "Numeric Volume=%g"%Volume
 			Volume_num[j][i]=Volume
 
-			plt.plot(arr_Coor_plt_X, arr_li, label="$\ell=$ %g, $h=$ %g"%(round(ell,5), round(hsize,4)))
+			plt.plot(arr_Coor_plt_X, arr_li, label="$\ell=$ %g$h$, $h=$ %g"%(ell_coe[i] , round(hsize,4)))
 
 	x, x_, width, width_, volumeAnalytical = SneddonWidth(pressure_max,E, nu) 
-	plt.plot(x, width, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[j])
+	plt.plot(x, width, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[j], label="Sneddon" )
 	plt.plot(x_, width_, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[j])
 
 	plt.xlabel("Fracture Length")
