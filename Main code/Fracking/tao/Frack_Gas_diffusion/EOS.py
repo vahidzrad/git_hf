@@ -32,7 +32,8 @@ def EqOfState(pressu):
 
 	#############################################################################################
 	load_steps=1000
-	temprature=[25+273.15, 45+273.15,65+273.15] # Celsius+273.15=Kelvin
+	#temprature=[25+273.15, 45+273.15,65+273.15] # Celsius+273.15=Kelvin
+	temprature=[45+273.15] # Celsius+273.15=Kelvin
 	rho_vector = np.linspace(0.01, 10000, load_steps) #kg/m^3
 
 	i_t=len(temprature)
@@ -106,7 +107,7 @@ def EqOfState(pressu):
 	#plt.show()
         #plt.interactive(False)
 
-	x = pressure[2,:] # 	Pressure with temprature 45
+	x = pressure[0,:] # 	Pressure with temprature 45
 	y = np.r_[0, rho_vector]
 
 

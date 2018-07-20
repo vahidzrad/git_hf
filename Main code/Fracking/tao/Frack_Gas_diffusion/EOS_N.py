@@ -31,7 +31,7 @@ def EqOfState_N(rho):
 
 	#############################################################################################
 	load_steps=100
-	temprature=[25+273.15, 45+273.15,65+273.15] # Celsius+273.15=Kelvin
+	temprature=[ 45+273.15,65] # Celsius+273.15=Kelvin
 	#rho_vector = np.linspace(0.01, 900, load_steps) #kg/m^3
 
 	i_t=len(temprature)
@@ -92,7 +92,7 @@ def EqOfState_N(rho):
 			N[i,j]=R*T*(delta**2 * phi_r_delta_delta +2*delta*phi_r_delta + 1) # J/(Kg*K)*K-->m^2/s^2
 
 
-	Nx = N[2,:] # 	N with temprature 4
+	Nx = N[0,:] # 	N with temprature 4
 	return  Nx 
 
 if __name__ == '__main__':
