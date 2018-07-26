@@ -25,14 +25,17 @@ from Sneddon import SneddonWidth
 import os
 import matplotlib.pyplot as plt
 
-pressure_max_list=[ 0.5]
-hsize_list = [ 0.02, 0.01,0.005]
+pressure_max_list=[ 3.]
+hsize_list = [0.02]
 colors_i = ['r', 'b', 'g','m','c','k']
+L =1.
+H=1.
 
 E = 1. # Young modulus
 nu = 0.0 # Poisson ratio
 
-ModelB= False 
+ModelB= True
+ 
 if not ModelB:  # Model A (isotropic model)
 	Model = 'Isotropic'
 else:  # Model B (Amor's model)
@@ -42,21 +45,46 @@ law='AT1'
 
 Volume_num  =np.zeros((max(len(pressure_max_list),len(hsize_list)), 4)) #4 is thelength of ell_list
 
+
+
 for (k, pressure_max) in enumerate(pressure_max_list):
 	fig = plt.figure()
+
+
+	n=0;
+
+	Opentxt = np.zeros((2*len(hsize_list)*2,41)) #2*len(hsize_list)*len(ell_list)
 	for (j, hsize) in enumerate(hsize_list):
-		ell_list = [12*hsize, 13*hsize]
-		ell_coe = [12, 13]
+		ell_list = [2*hsize, 4*hsize]
+		ell_coe = [2, 4]
 		#ell_list = [0.13]
+
+		print Opentxt
 		for (i, ell) in enumerate(ell_list):
+
+
+
+			save_fig = "Fracking_result/"
+
 		    	# Varying the hsize mesh size
 		       	Fracking(hsize, pressure_max, ell,E, nu, Model, law)
 			arr_Coor_plt_X, arr_li, Volume = Opening(hsize,ell, Model, law)
+			
+			#print len(arr_Coor_plt_X)
 
 			print "Numeric Volume=%g"%Volume
 			Volume_num[j][i]=Volume
 
 			plt.plot(arr_Coor_plt_X, arr_li, label="$\ell=$ %g$h$, $h=$ %g"%(ell_coe[i] , round(hsize,4)))
+
+	    		Opentxt[2*n] = np.array([arr_Coor_plt_X])
+	    		Opentxt[2*n+1] = np.array([arr_li])
+			n=n+1;
+			print 'n', n
+			print Opentxt
+
+	np.savetxt(save_fig+'/Opentxt.txt', Opentxt)
+
 
 	x, x_, width, width_, volumeAnalytical = SneddonWidth(pressure_max,E, nu) 
 	plt.plot(x, width, '-', dashes=[8, 4, 2, 4, 2, 4], color = colors_i[j], label="Sneddon" )

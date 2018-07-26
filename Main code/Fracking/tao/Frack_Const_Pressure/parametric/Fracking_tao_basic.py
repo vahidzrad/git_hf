@@ -295,7 +295,7 @@ def Fracking(hsize, pressure_max, ell,E, nu, Model, law):
 		"""
 		The strain energy density for model B
 		"""
-		return  g(alpha_) * ( 0.5*K * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2) + 0.5*K * ( angle_bracket_minus(tr(dev_eps(u_))**2))
+		return  g(alpha_) * ( 0.5*K * ( angle_bracket_plus(tr(dev_eps(u_))))**2 + mu*dev_eps(u_)**2) + 0.5*K * ( angle_bracket_minus(tr(dev_eps(u_))))**2
 	#----------------------------------------------------------------------------------------
 
 	if not ModelB:  # Model A (isotropic model)
