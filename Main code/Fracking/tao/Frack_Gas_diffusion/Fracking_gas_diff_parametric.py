@@ -39,14 +39,14 @@ law='AT1'
 
 ka_list = [7.]
 kb = 1.
-q =20.
+q =2.#40.
 
-pressure_steps_list= [25]
+pressure_steps_list= [10]
 
 for (k, pressure_steps) in enumerate(pressure_steps_list):
 
 	for (j, ka) in enumerate(ka_list):
-		ell_list = [2*hsize]
+		ell_list = [1*hsize, 2*hsize, 4*hsize]
 
 		for (i, ell) in enumerate(ell_list):
 		    	# Varying the hsize mesh size

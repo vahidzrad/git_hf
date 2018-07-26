@@ -70,7 +70,7 @@ def Fracking(E, nu, hsize, ell, law, ModelB, ka, kb, q, pressure_steps):
 	L = 170. # length
 	H = 170. # height
 	#hsize= 0.8 # target cell size
-	radius = 10.
+	radius = 2.5
 	meshname="fracking_hsize%g" % (hsize)
 
 	# Material constants
@@ -94,7 +94,7 @@ def Fracking(E, nu, hsize, ell, law, ModelB, ka, kb, q, pressure_steps):
 	else:
 		Gc = gc 
 
-	Gc = gc  # fracture toughness
+	#Gc = gc  # fracture toughness
 
 
 	#ModelB= False 
@@ -135,7 +135,7 @@ def Fracking(E, nu, hsize, ell, law, ModelB, ka, kb, q, pressure_steps):
 			H = 170.;
 			L = 170.;
 
-			r=10.;
+			r=2.5;
 			a=1.;
 
 		        Point(1) = {0, 0, 0, 1*lc};
@@ -333,7 +333,8 @@ def Fracking(E, nu, hsize, ell, law, ModelB, ka, kb, q, pressure_steps):
 		"""
 		The strain energy density for model B
 		"""
-		return  0.5*(lmbda+2/3*mu) * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2 + 0.5*(lmbda+2/3*mu) * ( angle_bracket_minus(tr(dev_eps(u_))**2))
+		return  g(alpha_) * (0.5*(lmbda+2/3*mu) * ( angle_bracket_plus(tr(dev_eps(u_))))**2 + mu*dev_eps(u_)**2) + 0.5*(lmbda+2/3*mu) * ( angle_bracket_minus(tr(dev_eps(u_))))**2
+
 	#----------------------------------------------------------------------------------------
 
 	if not ModelB:  # Model A (isotropic model)
