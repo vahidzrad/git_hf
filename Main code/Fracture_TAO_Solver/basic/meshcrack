@@ -1,0 +1,39 @@
+		lc = DefineNumber[ %g, Name "Parameters/lc" ];
+		H = 1;
+		L = 1;
+		eps=0.005;
+                Point(1) = {0, H/2+eps, 0, 1*lc};
+                Point(2) = {0, H, 0, 1*lc};
+                Point(3) = {L, H, 0, 1*lc};
+                Point(4) = {L, H/2, 0, 1*lc};
+                Point(5) = {L, 0, 0, 1*lc};
+                Point(6) = {0, 0, 0, 1*lc};
+                Point(7) = {0, H/2-eps, 0, 1*lc};
+                Point(8) = {L/2, H/2-eps, 0, 1*lc};
+                Point(9) = {L/2, H/2, 0, 1*lc};
+                Point(10) = {L/2, H/2+eps, 0, 1*lc};
+
+                Line(1) = {1, 2};
+                Line(2) = {2, 3};
+                Line(3) = {3, 4};
+                Line(4) = {4, 9};
+                Line(5) = {9, 10};
+                Line(6) = {10, 1};
+
+                Line(7) = {6, 7};
+                Line(8) = {5, 6};
+                Line(9) = {4, 5};
+                Line(10) = {8, 9};
+                Line(11) = {7, 8};
+
+                Line Loop(1000) = {1, 2, 3,9,8,7,11,10,5,6};
+
+
+		Plane Surface(30) = {1000};
+
+
+                Line{4} In Surface{30};
+
+		Physical Surface(1) = {30};
+
+		Physical Line(101) = {4};
