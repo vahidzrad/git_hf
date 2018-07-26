@@ -26,7 +26,7 @@ from Fracture_QS_TAO import Fracking
 
 
 
-hsize = 0.005
+hsize =  0.01
 
 colors_i = ['r', 'b', 'g','m','c','k']
 
@@ -34,15 +34,15 @@ colors_i = ['r', 'b', 'g','m','c','k']
 E = 210. # Young modulus
 nu = 0.3 # Poisson ratio
 
-ModelB= True 
+ModelB= False 
 law='AT2'
 
 
 
-load_steps_list= [25,50,100]
+load_steps_list= [100]
 
 for (k, load_steps) in enumerate(load_steps_list):
-		ell_list = [0.02]
+		ell_list = [0.04, 0.02, 0.01]
 
 		for (i, ell) in enumerate(ell_list):
 		    	# Varying the hsize mesh size

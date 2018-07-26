@@ -310,7 +310,7 @@ def Fracking(E, nu, hsize, ell, law, ModelB, load_steps):
 		The strain energy density for model B
 		"""
 		K = lmbda+2/3*mu
-		return  g(alpha_) * ( 0.5*K * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2) + 0.5*K * ( angle_bracket_minus(tr(dev_eps(u_))**2))
+		return  g(alpha_) * ( 0.5*K * ( angle_bracket_plus(tr(dev_eps(u_))))**2 + mu*dev_eps(u_)**2) + 0.5*K * ( angle_bracket_minus(tr(dev_eps(u_))))**2
 	#----------------------------------------------------------------------------------------
 
 	if not ModelB:  # Model A (isotropic model)
@@ -518,7 +518,7 @@ def Fracking(E, nu, hsize, ell, law, ModelB, load_steps):
 
 	    print"\033[1;32m--- Time step %d: t = %g ---\033[1;m" % (i_t, t)
 	    u_T.t = t*ut
-	    u_B.t = t*ut
+	    #u_B.t = t*ut
 	    #sigma_T.t = t
 	    #sigma_B.t = t
 
