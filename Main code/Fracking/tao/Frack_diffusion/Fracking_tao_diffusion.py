@@ -70,7 +70,7 @@ def Fracking(E, nu, hsize, ell, law, ModelB, ka, kb, q, pressure_steps):
 	PlaneStress= False
 
 	gc = 1. # fracture toughness
-	k_ell = Constant(1.0e-12) # residual stiffness
+	k_ell = Constant(1.0e-10) # residual stiffness
 	#law = "AT1"
 
 	# effective toughness 
@@ -107,7 +107,7 @@ def Fracking(E, nu, hsize, ell, law, ModelB, ka, kb, q, pressure_steps):
 
 	M_biot=1/( phi/K_f+(biot-phi)/K_s)  #1./M_biot=phi/K_f+(alpha-phi)/K_s #MPa
 	print "M_biot", M_biot
-	kappa= 1.e-18 #is the permeability of the rock #m^2
+	kappa= 1.e-12 #is the permeability of the rock #m^2
 	mu_dynamic= 0.79e-9  #is the dynamic viscosity of the fluid #MPa
 
 	f = Constant(0)
@@ -324,7 +324,8 @@ def Fracking(E, nu, hsize, ell, law, ModelB, ka, kb, q, pressure_steps):
 		"""
 		The strain energy density for model B
 		"""
-		return  0.5*(lmbda+2/3*mu) * ( angle_bracket_plus(tr(dev_eps(u_))**2)) + mu*dev_eps(u_)**2 + 0.5*(lmbda+2/3*mu) * ( angle_bracket_minus(tr(dev_eps(u_))**2))
+		return  g(alpha_) * (0.5*(lmbda+2/3*mu) * ( angle_bracket_plus(tr(dev_eps(u_))))**2 + mu*dev_eps(u_)**2) + 0.5*(lmbda+2/3*mu) * ( angle_bracket_minus(tr(dev_eps(u_))))**2
+
 	#----------------------------------------------------------------------------------------
 
 	if not ModelB:  # Model A (isotropic model)

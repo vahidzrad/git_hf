@@ -26,7 +26,7 @@ from Fracking_tao_diffusion import Fracking
 
 
 
-hsize =  0.75
+hsize =  1.5
 
 colors_i = ['r', 'b', 'g','m','c','k']
 
@@ -39,7 +39,7 @@ law='AT1'
 
 ka_list = [7.]
 kb = 1.
-q =6.e-5
+q =5.e-2 #6.e-5
 
 pressure_steps_list= [10]
 
