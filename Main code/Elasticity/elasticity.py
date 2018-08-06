@@ -24,7 +24,7 @@ petsc4py.init()
 from petsc4py import PETSc
 from numpy import loadtxt 
 from scipy.interpolate import interp1d
-
+from BC_MosVah import BC_Stress
 
 mpi_process_rank = dolfin.cpp.common.MPI_rank(mpi_comm_world())
 #=======================================================================================
@@ -60,7 +60,7 @@ solver_u_parameters ={"linear_solver", "mumps", # prefer "superlu_dist" or "mump
 # Geometry
 L = 170 # length
 H = 170 # height
-
+Lx= 100
 
 # Material constants
 E = 6.e3 # Young modulus
@@ -78,7 +78,7 @@ body_force = Constant((0.,0.))  # bulk load
 #=======================================================================================
 # Geometry and mesh generation
 #=======================================================================================
-mesh = RectangleMesh(Point(0., 0.), Point(170, 170), 100, 100)
+mesh = RectangleMesh(Point(0., 0.), Point(L, H), Lx, Lx)
 plt.figure(1)
 plot(mesh, "2D mesh")
 plt.interactive(True)
@@ -108,7 +108,7 @@ def psi_0(u_):
 #=======================================================================================
 # others definitions
 #=======================================================================================
-dispMehtod = False
+dispMehtod = True
 
 if not dispMehtod:  
 	Mehtod= 'StressBC';
@@ -272,6 +272,15 @@ von_Mises = sqrt(3./2*inner(s, s))
 V = FunctionSpace(mesh, 'P', 1)
 von_Mises = project(von_Mises, V)
 File(save_dir+"von_Mises.pvd") << von_Mises
+############################################################################################
+if  dispMehtod:  
+	output_file_u = HDF5File(mpi_comm_world(), save_dir+"u_4_bc.h5", "w") 
+	output_file_u.write(u_, "solution")
+	output_file_u.close()
+
+
+BC_Stress(Mehtod, H, L, Lx)
+
 
 
 
